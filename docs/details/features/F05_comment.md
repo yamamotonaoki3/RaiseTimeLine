@@ -31,8 +31,11 @@ flowchart TD
     F --> D
     E -- OK --> G["POST /api/posts/{postId}/comments"]
     G --> H[コメントを一覧に追加]
-    C -- コメント削除\n※本人のみ --> I["DELETE /api/comments/{id}"]
-    I --> J[コメントを一覧から削除]
+    C -- コメント削除\n※本人のみ --> I["D-01 削除確認ダイアログを表示"]
+    I --> I2{"「削除する」\nボタン押下?"}
+    I2 -- キャンセル --> B
+    I2 -- 削除確定 --> I3["DELETE /api/comments/{id}"]
+    I3 --> J[コメントを一覧から削除]
 ```
 
 ---
