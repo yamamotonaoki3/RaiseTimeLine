@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { Post } from '../api/posts'
+import DeleteModal from './DeleteModal'
+import EditPostModal from './EditPostModal'
 
 interface Props {
   post: Post
@@ -9,26 +11,10 @@ interface Props {
 }
 
 export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Props) {
-  const [editing, setEditing] = useState(false)
-  const [editContent, setEditContent] = useState(post.content)
-  const [saving, setSaving] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
+  const [showDelete, setShowDelete] = useState(false)
   const isOwner = post.userId === currentUserId
-
-  const handleSave = async () => {
-    if (!editContent.trim() || saving) return
-    setSaving(true)
-    try {
-      await onUpdate(post.id, editContent.trim())
-      setEditing(false)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleDelete = async () => {
-    if (!window.confirm('この投稿を削除しますか？')) return
-    await onDelete(post.id)
-  }
+  const isEdited = post.updatedAt !== post.createdAt
 
   const formattedDate = new Date(post.createdAt).toLocaleString('ja-JP', {
     month: 'numeric',
@@ -37,49 +23,54 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
     minute: '2-digit',
   })
 
+  const initial = post.displayName.charAt(0).toUpperCase()
+
   return (
-    <div className="post-card">
-      <div className="post-card-header">
-        <span className="post-author">{post.displayName}</span>
-        <span className="post-date">{formattedDate}</span>
-      </div>
-      {editing ? (
-        <div className="post-edit">
-          <textarea
-            className="post-textarea"
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            maxLength={280}
-            rows={3}
-          />
-          <div className="post-edit-actions">
-            <button className="btn-primary post-submit-btn" onClick={handleSave} disabled={saving}>
-              {saving ? '保存中...' : '保存'}
-            </button>
-            <button
-              className="btn-secondary"
-              onClick={() => {
-                setEditing(false)
-                setEditContent(post.content)
-              }}
-            >
-              キャンセル
-            </button>
+    <>
+      <div className="post-card">
+        <div className="post-card-inner">
+          <div className="post-avatar">{initial}</div>
+          <div className="post-body">
+            <div className="post-meta">
+              <span className="post-author">{post.displayName}</span>
+              <span className="post-date">{formattedDate}</span>
+              {isEdited && <span className="edited-badge">編集済み</span>}
+            </div>
+            <p className="post-text">{post.content}</p>
+            {isOwner && (
+              <div className="post-actions">
+                <button className="action-btn" onClick={() => setShowEdit(true)}>
+                  ✏️ 編集
+                </button>
+                <button className="action-btn danger-btn" onClick={() => setShowDelete(true)}>
+                  🗑️ 削除
+                </button>
+              </div>
+            )}
           </div>
         </div>
-      ) : (
-        <p className="post-content">{post.content}</p>
+      </div>
+
+      {showEdit && (
+        <EditPostModal
+          post={post}
+          onSave={async (content) => {
+            await onUpdate(post.id, content)
+            setShowEdit(false)
+          }}
+          onClose={() => setShowEdit(false)}
+        />
       )}
-      {isOwner && !editing && (
-        <div className="post-actions">
-          <button className="btn-text" onClick={() => setEditing(true)}>
-            編集
-          </button>
-          <button className="btn-text btn-text--danger" onClick={handleDelete}>
-            削除
-          </button>
-        </div>
+
+      {showDelete && (
+        <DeleteModal
+          onConfirm={async () => {
+            await onDelete(post.id)
+            setShowDelete(false)
+          }}
+          onClose={() => setShowDelete(false)}
+        />
       )}
-    </div>
+    </>
   )
 }

@@ -36,6 +36,7 @@ export default function LoginPage() {
   return (
     <div className="auth-container">
       <div className="auth-card">
+        <div className="auth-logo">RaiseTimeLine</div>
         <h1>ログイン</h1>
         {error && <div className="alert alert-error">{error}</div>}
         <form onSubmit={handleSubmit}>
@@ -63,7 +64,7 @@ export default function LoginPage() {
               required
             />
           </div>
-          <button className="btn-primary" type="submit" disabled={loading}>
+          <button className="btn btn-primary btn-full" type="submit" disabled={loading}>
             {loading ? 'ログイン中...' : 'ログイン'}
           </button>
         </form>
