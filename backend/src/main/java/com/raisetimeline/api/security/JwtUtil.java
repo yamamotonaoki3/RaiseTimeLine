@@ -14,20 +14,20 @@ import org.springframework.stereotype.Component;
 public class JwtUtil {
 
     private final SecretKey secretKey;
-    private final long expiration;
+    private final long accessExpiration;
 
     public JwtUtil(
             @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration}") long expiration) {
+            @Value("${jwt.access-expiration}") long accessExpiration) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expiration = expiration;
+        this.accessExpiration = accessExpiration;
     }
 
-    public String generateToken(String email) {
+    public String generateAccessToken(String email) {
         return Jwts.builder()
                 .subject(email)
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + expiration))
+                .expiration(new Date(System.currentTimeMillis() + accessExpiration))
                 .signWith(secretKey)
                 .compact();
     }
