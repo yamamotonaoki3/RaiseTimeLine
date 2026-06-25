@@ -73,7 +73,7 @@ public class AuthController {
     private void setRefreshTokenCookie(HttpServletResponse response, String token) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE, token);
         cookie.setHttpOnly(true);
-        cookie.setPath("/api/auth/refresh");
+        cookie.setPath("/api/auth");
         cookie.setMaxAge(REFRESH_TOKEN_MAX_AGE);
         response.addCookie(cookie);
     }
@@ -81,7 +81,7 @@ public class AuthController {
     private void clearRefreshTokenCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE, "");
         cookie.setHttpOnly(true);
-        cookie.setPath("/api/auth/refresh");
+        cookie.setPath("/api/auth");
         cookie.setMaxAge(0);
         response.addCookie(cookie);
     }

@@ -73,12 +73,13 @@ api.interceptors.response.use(
 
 export async function register(
   email: string,
+  username: string,
   displayName: string,
   password: string,
 ): Promise<AuthResponse> {
   const { data } = await axios.post<AuthResponse>(
     '/api/auth/register',
-    { email, displayName, password },
+    { email, username, displayName, password },
     { withCredentials: true },
   )
   return data

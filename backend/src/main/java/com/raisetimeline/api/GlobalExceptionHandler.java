@@ -2,6 +2,7 @@ package com.raisetimeline.api;
 
 import com.raisetimeline.api.exception.DuplicateDisplayNameException;
 import com.raisetimeline.api.exception.DuplicateEmailException;
+import com.raisetimeline.api.exception.DuplicateUsernameException;
 import com.raisetimeline.api.exception.InvalidRefreshTokenException;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateEmailException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public Map<String, Object> handleDuplicateEmail(DuplicateEmailException ex) {
+        return Map.of("status", 409, "message", ex.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateUsernameException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, Object> handleDuplicateUsername(DuplicateUsernameException ex) {
         return Map.of("status", 409, "message", ex.getMessage());
     }
 

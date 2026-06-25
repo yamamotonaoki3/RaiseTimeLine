@@ -3,6 +3,7 @@ package com.raisetimeline.api.auth;
 import com.raisetimeline.api.auth.refreshtoken.RefreshTokenService;
 import com.raisetimeline.api.exception.DuplicateDisplayNameException;
 import com.raisetimeline.api.exception.DuplicateEmailException;
+import com.raisetimeline.api.exception.DuplicateUsernameException;
 import com.raisetimeline.api.security.JwtUtil;
 import com.raisetimeline.api.user.User;
 import com.raisetimeline.api.user.UserMapper;
@@ -38,6 +39,9 @@ public class AuthService {
         if (userMapper.findByEmail(request.email()).isPresent()) {
             throw new DuplicateEmailException("このメールアドレスは既に使用されています");
         }
+        if (userMapper.findByUsername(request.username()).isPresent()) {
+            throw new DuplicateUsernameException("このユーザー名は既に使用されています");
+        }
         if (userMapper.findByDisplayName(request.displayName()).isPresent()) {
             throw new DuplicateDisplayNameException("この表示名は既に使用されています");
         }
@@ -45,6 +49,7 @@ public class AuthService {
         User user = new User();
         user.setEmail(request.email());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setUsername(request.username());
         user.setDisplayName(request.displayName());
         userMapper.insert(user);
 
