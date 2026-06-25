@@ -1,7 +1,7 @@
 package com.raisetimeline.api.auth;
 
 public record AuthResponse(
-        String token,
+        String accessToken,
         Long userId,
         String displayName,
         String email

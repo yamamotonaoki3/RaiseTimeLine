@@ -18,8 +18,11 @@ public interface UserMapper {
     @Select("SELECT * FROM users WHERE id = #{id}")
     Optional<User> findById(Long id);
 
-    @Insert("INSERT INTO users (email, password_hash, display_name, bio, created_at) "
-            + "VALUES (#{email}, #{passwordHash}, #{displayName}, #{bio}, NOW())")
+    @Select("SELECT * FROM users WHERE username = #{username}")
+    Optional<User> findByUsername(String username);
+
+    @Insert("INSERT INTO users (email, password_hash, username, display_name, bio, created_at) "
+            + "VALUES (#{email}, #{passwordHash}, #{username}, #{displayName}, #{bio}, NOW())")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(User user);
 }

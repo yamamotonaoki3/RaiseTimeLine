@@ -7,6 +7,7 @@ public class User {
     private Long id;
     private String email;
     private String passwordHash;
+    private String username;
     private String displayName;
     private String avatarUrl;
     private String bio;
@@ -34,6 +35,14 @@ public class User {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String getDisplayName() {
