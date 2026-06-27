@@ -9,6 +9,9 @@ export interface AuthResponse {
 
 export interface RefreshResponse {
   accessToken: string
+  userId: number
+  displayName: string
+  email: string
 }
 
 let currentAccessToken: string | null = null
