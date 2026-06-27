@@ -21,19 +21,24 @@
 
 | メソッド | パス | 概要 | 認証 |
 | --- | --- | --- | --- |
-| POST | `/api/auth/register` | ユーザー登録 | 不要 |
-| POST | `/api/auth/login` | ログイン → JWT 返却 | 不要 |
+| POST | `/api/auth/register` | ユーザー登録 → JWT（アクセストークン）＋リフレッシュトークン（Cookie）返却 | 不要 |
+| POST | `/api/auth/login` | ログイン → JWT（アクセストークン）＋リフレッシュトークン（Cookie）返却 | 不要 |
+| POST | `/api/auth/refresh` | リフレッシュトークンで新しいアクセストークンを発行 | 不要（Cookie） |
+| POST | `/api/auth/logout` | リフレッシュトークンを無効化・Cookie 削除 | 必要 |
 
 ### 投稿（Posts）
 
-| メソッド | パス | 概要 | 認証 |
-| --- | --- | --- | --- |
-| GET | `/api/posts?feed=following` | フォロー中ユーザーのタイムライン取得 | 必要 |
-| GET | `/api/posts?feed=all` | 全体タイムライン取得 | 必要 |
-| POST | `/api/posts` | 投稿作成（multipart/form-data） | 必要 |
-| GET | `/api/posts/{id}` | 投稿詳細取得 | 必要 |
-| PUT | `/api/posts/{id}` | 投稿編集（本人のみ） | 必要 |
-| DELETE | `/api/posts/{id}` | 投稿削除（本人のみ） | 必要 |
+| メソッド | パス | 概要 | 認証 | 実装状況 |
+| --- | --- | --- | --- | --- |
+| GET | `/api/posts?limit=20` | 全体タイムライン取得（初回） | 必要 | ✅ 実装済み |
+| GET | `/api/posts?cursor={id}&limit=20` | 全体タイムライン取得（無限スクロール） | 必要 | ✅ 実装済み |
+| GET | `/api/posts/new-count?sinceId={id}` | 新着件数チェック（30秒ポーリング用） | 必要 | ✅ 実装済み |
+| GET | `/api/posts/newer?sinceId={id}` | 新着投稿取得（バナークリック時） | 必要 | ✅ 実装済み |
+| POST | `/api/posts` | 投稿作成（JSON） | 必要 | ✅ 実装済み |
+| GET | `/api/posts/{id}` | 投稿詳細取得 | 必要 | ✅ 実装済み |
+| PATCH | `/api/posts/{id}` | 投稿編集（本人のみ） | 必要 | ✅ 実装済み |
+| DELETE | `/api/posts/{id}` | 投稿削除（本人のみ） | 必要 | ✅ 実装済み |
+| GET | `/api/posts?feed=following&cursor={id}&limit=20` | フォロー中タイムライン取得 | 必要 | 将来対応予定 |
 
 ### コメント（Comments）
 
@@ -79,8 +84,9 @@
 ```json
 {
   "email": "user@example.com",
-  "password": "Password123!",
-  "displayName": "ユーザー名"
+  "username": "username",
+  "displayName": "表示名",
+  "password": "Password123!"
 }
 ```
 
@@ -88,9 +94,14 @@
 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "userId": 1,
+  "displayName": "表示名",
+  "email": "user@example.com"
 }
 ```
+
+※ リフレッシュトークンは HttpOnly Cookie で返却
 
 ---
 
@@ -109,38 +120,40 @@
 
 ```json
 {
-  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "userId": 1,
+  "displayName": "表示名",
+  "email": "user@example.com"
 }
 ```
 
+※ リフレッシュトークンは HttpOnly Cookie で返却
+
 ---
 
-### GET `/api/posts?feed=following&page=0&size=20`
+### GET `/api/posts?limit=20`
 
 **レスポンス（200 OK）**
 
 ```json
-{
-  "content": [
-    {
-      "id": 1,
-      "content": "投稿テキスト",
-      "imageUrl": "https://s3.ap-northeast-1.amazonaws.com/bucket/posts/xxx.jpg",
-      "createdAt": "2026-06-23T10:00:00",
-      "updatedAt": null,
-      "likeCount": 12,
-      "commentCount": 3,
-      "liked": false,
-      "author": {
-        "id": 2,
-        "displayName": "表示名",
-        "avatarUrl": "https://s3.ap-northeast-1.amazonaws.com/bucket/avatars/yyy.jpg"
-      }
-    }
-  ],
-  "totalPages": 5,
-  "totalElements": 98
-}
+[
+  {
+    "id": 42,
+    "userId": 2,
+    "displayName": "表示名",
+    "content": "投稿テキスト",
+    "createdAt": "2026-06-27T10:00:00",
+    "updatedAt": "2026-06-27T10:00:00"
+  }
+]
+```
+
+### GET `/api/posts/new-count?sinceId=42`
+
+**レスポンス（200 OK）**
+
+```json
+3
 ```
 
 ---
