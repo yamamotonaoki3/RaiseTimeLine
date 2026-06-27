@@ -5,9 +5,10 @@ import { createComment, deleteComment, getComments } from '../api/comments'
 interface Props {
   postId: number
   currentUserId: number
+  onCommentAdded?: () => void
 }
 
-export default function CommentSection({ postId, currentUserId }: Props) {
+export default function CommentSection({ postId, currentUserId, onCommentAdded }: Props) {
   const [comments, setComments] = useState<Comment[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -24,6 +25,7 @@ export default function CommentSection({ postId, currentUserId }: Props) {
       const comment = await createComment(postId, input.trim())
       setComments((prev) => [...prev, comment])
       setInput('')
+      onCommentAdded?.()
     } finally {
       setLoading(false)
     }

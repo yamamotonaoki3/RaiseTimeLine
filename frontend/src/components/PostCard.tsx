@@ -16,6 +16,7 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
   const [showEdit, setShowEdit] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
   const [showComments, setShowComments] = useState(false)
+  const [commentCount, setCommentCount] = useState(post.commentCount)
   const isOwner = post.userId === currentUserId
   const isEdited = post.updatedAt !== post.createdAt
 
@@ -51,7 +52,7 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
                 onClick={() => setShowComments((v) => !v)}
                 aria-label="コメントを表示"
               >
-                💬 {post.commentCount}
+                💬 {commentCount}
               </button>
               {isOwner && (
                 <div className="post-actions">
@@ -65,7 +66,14 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
               )}
             </div>
             {showComments && (
-              <CommentSection postId={post.id} currentUserId={currentUserId} />
+              <CommentSection
+                postId={post.id}
+                currentUserId={currentUserId}
+                onCommentAdded={() => {
+                  setCommentCount((c) => c + 1)
+                  setShowComments(false)
+                }}
+              />
             )}
           </div>
         </div>

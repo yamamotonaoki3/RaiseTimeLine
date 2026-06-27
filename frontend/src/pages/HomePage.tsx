@@ -82,6 +82,15 @@ export default function HomePage() {
       if (topIdRef.current === 0) return
       const count = await getNewCount(topIdRef.current)
       setNewCount(count)
+      const refreshed = await getPosts()
+      setPosts((prev) =>
+        prev.map((p) => {
+          const updated = refreshed.find((r) => r.id === p.id)
+          return updated
+            ? { ...p, likeCount: updated.likeCount, likedByMe: updated.likedByMe, commentCount: updated.commentCount }
+            : p
+        }),
+      )
     }, POLL_INTERVAL)
     return () => clearInterval(timer)
   }, [])

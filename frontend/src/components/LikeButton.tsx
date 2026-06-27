@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { likePost, unlikePost } from '../api/likes'
 
 interface Props {
@@ -11,6 +11,11 @@ export default function LikeButton({ postId, initialCount, initialLiked }: Props
   const [liked, setLiked] = useState(initialLiked)
   const [count, setCount] = useState(initialCount)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    setCount(initialCount)
+    setLiked(initialLiked)
+  }, [initialCount, initialLiked])
 
   const handleToggle = async () => {
     if (loading) return
