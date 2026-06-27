@@ -70,12 +70,14 @@ public class AuthService {
         return new TokenPair(response, refreshToken);
     }
 
-    public RefreshResponse refresh(String refreshToken) {
+    public RefreshResult refreshSession(String refreshToken) {
         User user = refreshTokenService.validate(refreshToken);
         refreshTokenService.delete(refreshToken);
-        refreshTokenService.create(user.getId());
+        String newRefreshToken = refreshTokenService.create(user.getId());
         String newAccessToken = jwtUtil.generateAccessToken(user.getEmail());
-        return new RefreshResponse(newAccessToken, user.getId(), user.getDisplayName(), user.getEmail());
+        RefreshResponse response = new RefreshResponse(
+                newAccessToken, user.getId(), user.getDisplayName(), user.getEmail());
+        return new RefreshResult(response, newRefreshToken);
     }
 
     public void logout(String refreshToken) {
