@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Post } from '../api/posts'
 import CommentSection from './CommentSection'
 import DeleteModal from './DeleteModal'
@@ -18,6 +18,10 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
   const [showComments, setShowComments] = useState(false)
   const [commentCount, setCommentCount] = useState(post.commentCount)
   const isOwner = post.userId === currentUserId
+
+  useEffect(() => {
+    setCommentCount(post.commentCount)
+  }, [post.commentCount])
   const isEdited = post.updatedAt !== post.createdAt
 
   const formattedDate = new Date(post.createdAt).toLocaleString('ja-JP', {
