@@ -15,6 +15,7 @@ spring:
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
+  mapper-locations: classpath:mapper/**/*.xml
 
 jwt:
   secret: raisetimeline-secret-key-must-be-at-least-32-characters-long
