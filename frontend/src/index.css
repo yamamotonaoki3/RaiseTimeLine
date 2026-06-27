@@ -511,6 +511,145 @@ a:hover {
   text-decoration: underline;
 }
 
+/* ── Post Footer (like & comment) ── */
+.post-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.like-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #536471;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.like-btn:hover {
+  background: #fde8ef;
+  color: #e0245e;
+}
+
+.like-btn.liked {
+  color: #e0245e;
+}
+
+.comment-toggle-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #536471;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-family: inherit;
+  transition: background 0.15s, color 0.15s;
+}
+
+.comment-toggle-btn:hover {
+  background: #e8f5fe;
+  color: #1d9bf0;
+}
+
+/* ── Comment Section ── */
+.comment-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e7e7e7;
+}
+
+.comment-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.comment-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.comment-author {
+  font-weight: 700;
+  color: #0f1419;
+  flex-shrink: 0;
+}
+
+.comment-content {
+  color: #536471;
+  flex: 1;
+}
+
+.comment-delete-btn {
+  background: none;
+  border: none;
+  color: #cfd9de;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: inherit;
+  flex-shrink: 0;
+}
+
+.comment-delete-btn:hover {
+  background: #fde8ef;
+  color: #e0245e;
+}
+
+.comment-form {
+  display: flex;
+  gap: 8px;
+}
+
+.comment-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #cfd9de;
+  border-radius: 20px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+
+.comment-input:focus {
+  border-color: #1d9bf0;
+}
+
+.comment-submit-btn {
+  padding: 8px 16px;
+  background: #1d9bf0;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.comment-submit-btn:hover:not(:disabled) {
+  background: #1a8cd8;
+}
+
+.comment-submit-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* ── Legacy (unused) ── */
 .btn-secondary {
   padding: 6px 14px;

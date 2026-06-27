@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { Post } from '../api/posts'
 import DeleteModal from './DeleteModal'
 import EditPostModal from './EditPostModal'
+import LikeButton from './LikeButton'
 
 interface Props {
   post: Post
@@ -13,7 +15,12 @@ interface Props {
 export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Props) {
   const [showEdit, setShowEdit] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
+  const [commentCount, setCommentCount] = useState(post.commentCount)
   const isOwner = post.userId === currentUserId
+
+  useEffect(() => {
+    setCommentCount(post.commentCount)
+  }, [post.commentCount])
   const isEdited = post.updatedAt !== post.createdAt
 
   const formattedDate = new Date(post.createdAt).toLocaleString('ja-JP', {
@@ -37,16 +44,26 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
               {isEdited && <span className="edited-badge">編集済み</span>}
             </div>
             <p className="post-text">{post.content}</p>
-            {isOwner && (
-              <div className="post-actions">
-                <button className="action-btn" onClick={() => setShowEdit(true)}>
-                  ✏️ 編集
-                </button>
-                <button className="action-btn danger-btn" onClick={() => setShowDelete(true)}>
-                  🗑️ 削除
-                </button>
-              </div>
-            )}
+            <div className="post-footer">
+              <LikeButton
+                postId={post.id}
+                initialCount={post.likeCount}
+                initialLiked={post.likedByMe}
+              />
+              <Link to={`/posts/${post.id}`} className="comment-toggle-btn">
+                💬 {commentCount}
+              </Link>
+              {isOwner && (
+                <div className="post-actions">
+                  <button className="action-btn" onClick={() => setShowEdit(true)}>
+                    ✏️ 編集
+                  </button>
+                  <button className="action-btn danger-btn" onClick={() => setShowDelete(true)}>
+                    🗑️ 削除
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

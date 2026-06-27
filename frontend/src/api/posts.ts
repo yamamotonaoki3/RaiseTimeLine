@@ -7,6 +7,14 @@ export interface Post {
   content: string
   createdAt: string
   updatedAt: string
+  likeCount: number
+  likedByMe: boolean
+  commentCount: number
+}
+
+export async function getPostById(id: number): Promise<Post> {
+  const { data } = await api.get<Post>(`/api/posts/${id}`)
+  return data
 }
 
 export async function getPosts(params?: { cursor?: number }): Promise<Post[]> {
