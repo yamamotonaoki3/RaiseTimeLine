@@ -7,6 +7,9 @@ export interface Post {
   content: string
   createdAt: string
   updatedAt: string
+  likeCount: number
+  likedByMe: boolean
+  commentCount: number
 }
 
 export async function getPosts(params?: { cursor?: number }): Promise<Post[]> {

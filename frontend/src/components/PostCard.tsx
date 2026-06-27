@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import type { Post } from '../api/posts'
+import CommentSection from './CommentSection'
 import DeleteModal from './DeleteModal'
 import EditPostModal from './EditPostModal'
+import LikeButton from './LikeButton'
 
 interface Props {
   post: Post
@@ -13,6 +15,7 @@ interface Props {
 export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Props) {
   const [showEdit, setShowEdit] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
+  const [showComments, setShowComments] = useState(false)
   const isOwner = post.userId === currentUserId
   const isEdited = post.updatedAt !== post.createdAt
 
@@ -37,15 +40,32 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
               {isEdited && <span className="edited-badge">編集済み</span>}
             </div>
             <p className="post-text">{post.content}</p>
-            {isOwner && (
-              <div className="post-actions">
-                <button className="action-btn" onClick={() => setShowEdit(true)}>
-                  ✏️ 編集
-                </button>
-                <button className="action-btn danger-btn" onClick={() => setShowDelete(true)}>
-                  🗑️ 削除
-                </button>
-              </div>
+            <div className="post-footer">
+              <LikeButton
+                postId={post.id}
+                initialCount={post.likeCount}
+                initialLiked={post.likedByMe}
+              />
+              <button
+                className="comment-toggle-btn"
+                onClick={() => setShowComments((v) => !v)}
+                aria-label="コメントを表示"
+              >
+                💬 {post.commentCount}
+              </button>
+              {isOwner && (
+                <div className="post-actions">
+                  <button className="action-btn" onClick={() => setShowEdit(true)}>
+                    ✏️ 編集
+                  </button>
+                  <button className="action-btn danger-btn" onClick={() => setShowDelete(true)}>
+                    🗑️ 削除
+                  </button>
+                </div>
+              )}
+            </div>
+            {showComments && (
+              <CommentSection postId={post.id} currentUserId={currentUserId} />
             )}
           </div>
         </div>

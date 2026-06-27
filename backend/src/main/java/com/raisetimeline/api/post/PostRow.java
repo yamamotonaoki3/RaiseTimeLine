@@ -2,15 +2,12 @@ package com.raisetimeline.api.post;
 
 import java.time.LocalDateTime;
 
-public record PostResponse(
+public record PostRow(
         Long id,
         Long userId,
         String displayName,
         String content,
         LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        long likeCount,
-        boolean likedByMe,
-        long commentCount
+        LocalDateTime updatedAt
 ) {
 }

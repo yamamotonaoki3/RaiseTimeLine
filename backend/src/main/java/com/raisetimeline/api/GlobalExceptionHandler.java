@@ -3,6 +3,7 @@ package com.raisetimeline.api;
 import com.raisetimeline.api.exception.DuplicateDisplayNameException;
 import com.raisetimeline.api.exception.DuplicateEmailException;
 import com.raisetimeline.api.exception.DuplicateUsernameException;
+import com.raisetimeline.api.exception.CommentNotFoundException;
 import com.raisetimeline.api.exception.ForbiddenException;
 import com.raisetimeline.api.exception.InvalidRefreshTokenException;
 import com.raisetimeline.api.exception.PostNotFoundException;
@@ -60,6 +61,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PostNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, Object> handlePostNotFound(PostNotFoundException ex) {
+        return Map.of("status", 404, "message", ex.getMessage());
+    }
+
+    @ExceptionHandler(CommentNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, Object> handleCommentNotFound(CommentNotFoundException ex) {
         return Map.of("status", 404, "message", ex.getMessage());
     }
 

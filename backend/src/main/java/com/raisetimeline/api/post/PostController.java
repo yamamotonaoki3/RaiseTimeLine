@@ -28,10 +28,11 @@ public class PostController {
 
     @GetMapping
     public ResponseEntity<List<PostResponse>> getPosts(
-            @RequestParam(required = false) Long cursor) {
+            @RequestParam(required = false) Long cursor,
+            Authentication authentication) {
         List<PostResponse> posts = cursor == null
-                ? postService.getLatest()
-                : postService.getBefore(cursor);
+                ? postService.getLatest(authentication.getName())
+                : postService.getBefore(cursor, authentication.getName());
         return ResponseEntity.ok(posts);
     }
 
@@ -44,8 +45,9 @@ public class PostController {
 
     @GetMapping("/newer")
     public ResponseEntity<List<PostResponse>> getNewer(
-            @RequestParam Long sinceId) {
-        return ResponseEntity.ok(postService.getNewerThan(sinceId));
+            @RequestParam Long sinceId,
+            Authentication authentication) {
+        return ResponseEntity.ok(postService.getNewerThan(sinceId, authentication.getName()));
     }
 
     @PostMapping
