@@ -48,6 +48,12 @@ public class PostService {
         return enrich(postMapper.findNewerThan(sinceId), email);
     }
 
+    public PostResponse getById(Long id, String email) {
+        PostRow row = postMapper.findById(id)
+                .orElseThrow(() -> new PostNotFoundException("投稿が見つかりません"));
+        return enrich(List.of(row), email).get(0);
+    }
+
     public PostResponse create(String email, String content) {
         User user = userMapper.findByEmail(email).orElseThrow();
         Post post = new Post();

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import type { Post } from '../api/posts'
-import CommentSection from './CommentSection'
 import DeleteModal from './DeleteModal'
 import EditPostModal from './EditPostModal'
 import LikeButton from './LikeButton'
@@ -15,7 +15,6 @@ interface Props {
 export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Props) {
   const [showEdit, setShowEdit] = useState(false)
   const [showDelete, setShowDelete] = useState(false)
-  const [showComments, setShowComments] = useState(false)
   const [commentCount, setCommentCount] = useState(post.commentCount)
   const isOwner = post.userId === currentUserId
 
@@ -51,13 +50,9 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
                 initialCount={post.likeCount}
                 initialLiked={post.likedByMe}
               />
-              <button
-                className="comment-toggle-btn"
-                onClick={() => setShowComments((v) => !v)}
-                aria-label="コメントを表示"
-              >
+              <Link to={`/posts/${post.id}`} className="comment-toggle-btn">
                 💬 {commentCount}
-              </button>
+              </Link>
               {isOwner && (
                 <div className="post-actions">
                   <button className="action-btn" onClick={() => setShowEdit(true)}>
@@ -69,16 +64,6 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
                 </div>
               )}
             </div>
-            {showComments && (
-              <CommentSection
-                postId={post.id}
-                currentUserId={currentUserId}
-                onCommentAdded={() => {
-                  setCommentCount((c) => c + 1)
-                  setShowComments(false)
-                }}
-              />
-            )}
           </div>
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useAuth } from './context/useAuth'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import HomePage from './pages/HomePage'
+import PostDetailPage from './pages/PostDetailPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
@@ -39,6 +40,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <HomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/posts/:id"
+        element={
+          <ProtectedRoute>
+            <PostDetailPage />
           </ProtectedRoute>
         }
       />

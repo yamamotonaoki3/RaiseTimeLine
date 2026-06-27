@@ -36,6 +36,13 @@ public class PostController {
         return ResponseEntity.ok(posts);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<PostResponse> getPost(
+            @PathVariable Long id,
+            Authentication authentication) {
+        return ResponseEntity.ok(postService.getById(id, authentication.getName()));
+    }
+
     @GetMapping("/new-count")
     public ResponseEntity<Map<String, Long>> getNewCount(
             @RequestParam Long sinceId) {

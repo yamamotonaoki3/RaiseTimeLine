@@ -12,6 +12,11 @@ export interface Post {
   commentCount: number
 }
 
+export async function getPostById(id: number): Promise<Post> {
+  const { data } = await api.get<Post>(`/api/posts/${id}`)
+  return data
+}
+
 export async function getPosts(params?: { cursor?: number }): Promise<Post[]> {
   const { data } = await api.get<Post[]>('/api/posts', { params })
   return data
