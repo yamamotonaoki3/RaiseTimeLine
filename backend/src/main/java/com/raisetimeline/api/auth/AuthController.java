@@ -49,8 +49,8 @@ public class AuthController {
             HttpServletRequest request,
             HttpServletResponse response) {
         String refreshToken = extractRefreshTokenFromCookie(request);
-        String newAccessToken = authService.refresh(refreshToken);
-        return ResponseEntity.ok(new RefreshResponse(newAccessToken));
+        RefreshResponse refreshResponse = authService.refresh(refreshToken);
+        return ResponseEntity.ok(refreshResponse);
     }
 
     @PostMapping("/logout")
