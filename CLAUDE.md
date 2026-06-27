@@ -74,6 +74,26 @@ docs: 要件定義書を追加
 
 ---
 
+## バックエンドアーキテクチャ規約
+
+Spring Boot の基本 3 層構造を必ず守ること。
+
+```
+Controller → Service → Repository
+```
+
+| 層 | 責務 | 必須 |
+| --- | --- | --- |
+| Controller | HTTP リクエスト受け口。バリデーション・レスポンス組み立て | ✅ |
+| Service | ビジネスロジック。トランザクション境界 | ✅ |
+| Repository | データアクセス抽象化 | ✅ |
+| Mapper | MyBatis XML による SQL 実行 | 任意（プロジェクトごとに判断） |
+
+- Service は Repository 経由でデータアクセスする。
+- Mapper を使う場合、SQL は全て XML マッパーファイル（`resources/mapper/*.xml`）で管理する。アノテーション SQL は使わない。
+
+---
+
 ## 技術スタック
 
 | 役割 | 技術 |

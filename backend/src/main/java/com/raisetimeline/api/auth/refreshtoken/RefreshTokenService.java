@@ -2,7 +2,7 @@ package com.raisetimeline.api.auth.refreshtoken;
 
 import com.raisetimeline.api.exception.InvalidRefreshTokenException;
 import com.raisetimeline.api.user.User;
-import com.raisetimeline.api.user.UserMapper;
+import com.raisetimeline.api.user.UserRepository;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,16 +11,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class RefreshTokenService {
 
-    private final RefreshTokenMapper refreshTokenMapper;
-    private final UserMapper userMapper;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final UserRepository userRepository;
     private final long refreshExpiration;
 
     public RefreshTokenService(
-            RefreshTokenMapper refreshTokenMapper,
-            UserMapper userMapper,
+            RefreshTokenRepository refreshTokenRepository,
+            UserRepository userRepository,
             @Value("${jwt.refresh-expiration}") long refreshExpiration) {
-        this.refreshTokenMapper = refreshTokenMapper;
-        this.userMapper = userMapper;
+        this.refreshTokenRepository = refreshTokenRepository;
+        this.userRepository = userRepository;
         this.refreshExpiration = refreshExpiration;
     }
 
@@ -30,24 +30,24 @@ public class RefreshTokenService {
         refreshToken.setUserId(userId);
         refreshToken.setToken(token);
         refreshToken.setExpiresAt(LocalDateTime.now().plusSeconds(refreshExpiration / 1000));
-        refreshTokenMapper.insert(refreshToken);
+        refreshTokenRepository.insert(refreshToken);
         return token;
     }
 
     public User validate(String token) {
-        RefreshToken refreshToken = refreshTokenMapper.findByToken(token)
+        RefreshToken refreshToken = refreshTokenRepository.findByToken(token)
                 .orElseThrow(() -> new InvalidRefreshTokenException("リフレッシュトークンが無効です"));
 
         if (refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
-            refreshTokenMapper.deleteByToken(token);
+            refreshTokenRepository.deleteByToken(token);
             throw new InvalidRefreshTokenException("リフレッシュトークンの有効期限が切れています");
         }
 
-        return userMapper.findById(refreshToken.getUserId())
+        return userRepository.findById(refreshToken.getUserId())
                 .orElseThrow(() -> new InvalidRefreshTokenException("ユーザーが見つかりません"));
     }
 
     public void delete(String token) {
-        refreshTokenMapper.deleteByToken(token);
+        refreshTokenRepository.deleteByToken(token);
     }
 }
