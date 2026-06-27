@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.raisetimeline.api.user.UserMapper">
+
+    <select id="findByEmail" resultType="com.raisetimeline.api.user.User">
+        SELECT * FROM users WHERE email = #{email}
+    </select>
+
+    <select id="findByDisplayName" resultType="com.raisetimeline.api.user.User">
+        SELECT * FROM users WHERE display_name = #{displayName}
+    </select>
+
+    <select id="findById" resultType="com.raisetimeline.api.user.User">
+        SELECT * FROM users WHERE id = #{id}
+    </select>
+
+    <select id="findByUsername" resultType="com.raisetimeline.api.user.User">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (email, password_hash, username, display_name, bio, created_at)
+        VALUES (#{email}, #{passwordHash}, #{username}, #{displayName}, #{bio}, NOW())
+    </insert>
+
+</mapper>

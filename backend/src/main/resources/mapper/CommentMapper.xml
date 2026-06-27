@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.raisetimeline.api.comment.CommentMapper">
+
+    <select id="findByPostId" resultType="com.raisetimeline.api.comment.CommentResponse">
+        SELECT c.id, c.post_id, c.user_id, u.display_name, c.content, c.created_at, c.updated_at
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.post_id = #{postId}
+        ORDER BY c.id ASC
+    </select>
+
+    <select id="findById" resultType="com.raisetimeline.api.comment.CommentResponse">
+        SELECT c.id, c.post_id, c.user_id, u.display_name, c.content, c.created_at, c.updated_at
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO comments (post_id, user_id, content, created_at, updated_at)
+        VALUES (#{postId}, #{userId}, #{content}, NOW(), NOW())
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM comments WHERE id = #{id}
+    </delete>
+
+    <select id="countByPostIds" resultType="com.raisetimeline.api.like.PostCount">
+        SELECT post_id, COUNT(*) AS cnt
+        FROM comments
+        WHERE post_id IN
+        <foreach item="id" collection="postIds" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        GROUP BY post_id
+    </select>
+
+</mapper>
