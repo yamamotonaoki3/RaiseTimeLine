@@ -3,53 +3,55 @@ package com.raisetimeline.api.comment;
 import com.raisetimeline.api.exception.CommentNotFoundException;
 import com.raisetimeline.api.exception.ForbiddenException;
 import com.raisetimeline.api.exception.PostNotFoundException;
-import com.raisetimeline.api.post.PostMapper;
+import com.raisetimeline.api.post.PostRepository;
 import com.raisetimeline.api.user.User;
-import com.raisetimeline.api.user.UserMapper;
+import com.raisetimeline.api.user.UserRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CommentService {
 
-    private final CommentMapper commentMapper;
-    private final PostMapper postMapper;
-    private final UserMapper userMapper;
+    private final CommentRepository commentRepository;
+    private final PostRepository postRepository;
+    private final UserRepository userRepository;
 
-    public CommentService(CommentMapper commentMapper, PostMapper postMapper, UserMapper userMapper) {
-        this.commentMapper = commentMapper;
-        this.postMapper = postMapper;
-        this.userMapper = userMapper;
+    public CommentService(CommentRepository commentRepository,
+                          PostRepository postRepository,
+                          UserRepository userRepository) {
+        this.commentRepository = commentRepository;
+        this.postRepository = postRepository;
+        this.userRepository = userRepository;
     }
 
     public List<CommentResponse> getByPostId(Long postId) {
-        postMapper.findById(postId)
+        postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException("投稿が見つかりません"));
-        return commentMapper.findByPostId(postId);
+        return commentRepository.findByPostId(postId);
     }
 
     public CommentResponse create(Long postId, String email, String content) {
-        postMapper.findById(postId)
+        postRepository.findById(postId)
                 .orElseThrow(() -> new PostNotFoundException("投稿が見つかりません"));
-        User user = userMapper.findByEmail(email).orElseThrow();
+        User user = userRepository.findByEmail(email).orElseThrow();
         Comment comment = new Comment();
         comment.setPostId(postId);
         comment.setUserId(user.getId());
         comment.setContent(content);
-        commentMapper.insert(comment);
-        return commentMapper.findById(comment.getId()).orElseThrow();
+        commentRepository.insert(comment);
+        return commentRepository.findById(comment.getId()).orElseThrow();
     }
 
     public void delete(Long postId, Long commentId, String email) {
-        CommentResponse existing = commentMapper.findById(commentId)
+        CommentResponse existing = commentRepository.findById(commentId)
                 .orElseThrow(() -> new CommentNotFoundException("コメントが見つかりません"));
         if (!existing.postId().equals(postId)) {
             throw new CommentNotFoundException("コメントが見つかりません");
         }
-        User user = userMapper.findByEmail(email).orElseThrow();
+        User user = userRepository.findByEmail(email).orElseThrow();
         if (!existing.userId().equals(user.getId())) {
             throw new ForbiddenException("このコメントを削除する権限がありません");
         }
-        commentMapper.delete(commentId);
+        commentRepository.delete(commentId);
     }
 }
