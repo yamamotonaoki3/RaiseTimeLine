@@ -3,7 +3,9 @@ package com.raisetimeline.api;
 import com.raisetimeline.api.exception.DuplicateDisplayNameException;
 import com.raisetimeline.api.exception.DuplicateEmailException;
 import com.raisetimeline.api.exception.DuplicateUsernameException;
+import com.raisetimeline.api.exception.ForbiddenException;
 import com.raisetimeline.api.exception.InvalidRefreshTokenException;
+import com.raisetimeline.api.exception.PostNotFoundException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -53,6 +55,18 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public Map<String, Object> handleDuplicateDisplayName(DuplicateDisplayNameException ex) {
         return Map.of("status", 409, "message", ex.getMessage());
+    }
+
+    @ExceptionHandler(PostNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, Object> handlePostNotFound(PostNotFoundException ex) {
+        return Map.of("status", 404, "message", ex.getMessage());
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public Map<String, Object> handleForbidden(ForbiddenException ex) {
+        return Map.of("status", 403, "message", ex.getMessage());
     }
 
     @ExceptionHandler(InvalidRefreshTokenException.class)
