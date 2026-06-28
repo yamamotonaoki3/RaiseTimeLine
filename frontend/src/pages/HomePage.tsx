@@ -81,27 +81,27 @@ export default function HomePage() {
     const timer = setInterval(async () => {
       if (topIdRef.current === 0) return
       const count = await getNewCount(topIdRef.current)
-      setNewCount(count)
-      const refreshed = await getPosts()
-      setPosts((prev) =>
-        prev.map((p) => {
-          const updated = refreshed.find((r) => r.id === p.id)
-          return updated
-            ? { ...p, likeCount: updated.likeCount, likedByMe: updated.likedByMe, commentCount: updated.commentCount }
-            : p
-        }),
-      )
+      if (count > 0) {
+        const newer = await getNewerPosts(topIdRef.current)
+        if (newer.length > 0) {
+          topIdRef.current = newer[0].id
+          setPosts((prev) => [...newer, ...prev])
+          setNewCount(newer.length)
+        }
+      } else {
+        const refreshed = await getPosts()
+        setPosts((prev) =>
+          prev.map((p) => {
+            const updated = refreshed.find((r) => r.id === p.id)
+            return updated
+              ? { ...p, likeCount: updated.likeCount, likedByMe: updated.likedByMe, commentCount: updated.commentCount }
+              : p
+          }),
+        )
+      }
     }, POLL_INTERVAL)
     return () => clearInterval(timer)
   }, [])
-
-  const handleShowNew = async () => {
-    const newer = await getNewerPosts(topIdRef.current)
-    if (newer.length === 0) return
-    topIdRef.current = newer[0].id
-    setPosts((prev) => [...newer, ...prev])
-    setNewCount(0)
-  }
 
   const handleCreate = async (content: string) => {
     const created = await createPost(content)
@@ -143,9 +143,9 @@ export default function HomePage() {
       <main className="main">
         <div className="container">
           {newCount > 0 && (
-            <button className="new-posts-banner" onClick={handleShowNew}>
-              {newCount}件の新しい投稿があります — クリックして表示
-            </button>
+            <div className="new-posts-banner" onClick={() => setNewCount(0)} style={{ cursor: 'pointer' }}>
+              {newCount}件の新しい投稿を表示しました
+            </div>
           )}
 
           <div className="compose-box">

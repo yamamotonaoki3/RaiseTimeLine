@@ -221,6 +221,13 @@ a:hover {
   justify-content: center;
   font-size: 18px;
   font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.post-avatar:hover {
+  opacity: 0.85;
+  text-decoration: none;
 }
 
 .post-body {
@@ -648,6 +655,195 @@ a:hover {
 .comment-submit-btn:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+/* ── Profile ── */
+.profile-card {
+  padding: 20px;
+}
+
+.profile-header {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.profile-avatar {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #1d9bf0;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-name {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.profile-bio {
+  font-size: 14px;
+  color: #536471;
+  margin-bottom: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.profile-stats {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stat-link {
+  font-size: 14px;
+  color: #536471;
+  cursor: pointer;
+}
+
+.stat-link:hover {
+  text-decoration: underline;
+}
+
+.stat-num {
+  font-weight: 700;
+  color: #0f1419;
+}
+
+/* ── Card (generic) ── */
+.card {
+  background: #fff;
+  border: 1px solid #e7e7e7;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+/* ── User Card ── */
+.user-card {
+  background: #fff;
+  border: 1px solid #e7e7e7;
+  border-radius: 12px;
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-card-avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #1d9bf0;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.user-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-card-name {
+  font-weight: 700;
+  font-size: 15px;
+  color: #0f1419;
+  display: block;
+}
+
+.user-card-bio {
+  font-size: 13px;
+  color: #536471;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #e7e7e7;
+}
+
+.tab-btn {
+  flex: 1;
+  text-align: center;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #536471;
+  border-bottom: 3px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  text-decoration: none;
+}
+
+.tab-btn:hover {
+  color: #0f1419;
+  text-decoration: none;
+  background: #f7f9f9;
+}
+
+.tab-btn.active {
+  color: #0f1419;
+  border-bottom-color: #1d9bf0;
+}
+
+/* ── Form helpers ── */
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  margin-top: 12px;
+  color: #0f1419;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #cfd9de;
+  border-radius: 8px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.15s;
+  background: #fff;
+  font-family: inherit;
+}
+
+.form-input:focus {
+  border-color: #1d9bf0;
+  box-shadow: 0 0 0 2px rgba(29, 155, 240, 0.15);
+}
+
+.error-msg {
+  color: #e0245e;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.empty-msg {
+  text-align: center;
+  color: #536471;
+  padding: 32px 0;
 }
 
 /* ── Legacy (unused) ── */

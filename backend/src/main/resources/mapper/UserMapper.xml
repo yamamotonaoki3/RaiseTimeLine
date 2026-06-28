@@ -24,4 +24,12 @@
         VALUES (#{email}, #{passwordHash}, #{username}, #{displayName}, #{bio}, NOW())
     </insert>
 
+
+    <update id="update">
+        UPDATE users
+        SET display_name = #{displayName},
+            bio          = #{bio}
+        WHERE id = #{id}
+    </update>
+
 </mapper>
