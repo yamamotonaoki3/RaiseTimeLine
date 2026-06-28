@@ -82,6 +82,8 @@ export default function HomePage() {
       if (topIdRef.current === 0) return
       const refreshed = await getPosts()
       const refreshedMap = new Map(refreshed.map((p) => [p.id, p]))
+      // refreshed の最小ID。これより古い投稿は取得範囲外なので削除チェック対象外
+      const minRefreshedId = refreshed.length > 0 ? Math.min(...refreshed.map((p) => p.id)) : 0
 
       const count = await getNewCount(topIdRef.current)
       if (count > 0) {
@@ -89,19 +91,20 @@ export default function HomePage() {
         if (newer.length > 0) {
           topIdRef.current = newer[0].id
           setPosts((prev) => {
-            const existingIds = new Set(refreshed.map((p) => p.id))
-            const deduped = prev.filter((p) => existingIds.has(p.id))
-            return [...newer, ...deduped]
+            const filtered = prev.filter((p) => p.id < minRefreshedId || refreshedMap.has(p.id))
+            return [...newer, ...filtered]
           })
           setNewCount((prev) => prev + newer.length)
         }
       } else {
         setPosts((prev) =>
           prev
-            .filter((p) => refreshedMap.has(p.id))
+            .filter((p) => p.id < minRefreshedId || refreshedMap.has(p.id))
             .map((p) => {
-              const updated = refreshedMap.get(p.id)!
-              return { ...p, likeCount: updated.likeCount, likedByMe: updated.likedByMe, commentCount: updated.commentCount }
+              const updated = refreshedMap.get(p.id)
+              return updated
+                ? { ...p, likeCount: updated.likeCount, likedByMe: updated.likedByMe, commentCount: updated.commentCount }
+                : p
             }),
         )
       }
