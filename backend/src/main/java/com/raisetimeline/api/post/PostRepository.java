@@ -45,6 +45,22 @@ public class PostRepository {
         postMapper.delete(id);
     }
 
+    public List<PostRow> findLatestFollowing(Long userId, int limit) {
+        return postMapper.findLatestFollowing(userId, limit);
+    }
+
+    public List<PostRow> findBeforeFollowing(Long userId, Long cursor, int limit) {
+        return postMapper.findBeforeFollowing(userId, cursor, limit);
+    }
+
+    public long countNewerThanFollowing(Long userId, Long sinceId) {
+        return postMapper.countNewerThanFollowing(userId, sinceId);
+    }
+
+    public List<PostRow> findNewerThanFollowing(Long userId, Long sinceId) {
+        return postMapper.findNewerThanFollowing(userId, sinceId);
+    }
+
     public List<PostRow> findByUserId(Long userId) {
         return postMapper.findByUserId(userId);
     }

@@ -48,6 +48,26 @@ public class PostService {
         return enrich(postRepository.findNewerThan(sinceId), email);
     }
 
+    public List<PostResponse> getLatestFollowing(String email) {
+        Long userId = userRepository.findByEmail(email).orElseThrow().getId();
+        return enrich(postRepository.findLatestFollowing(userId, PAGE_SIZE), email);
+    }
+
+    public List<PostResponse> getBeforeFollowing(Long cursor, String email) {
+        Long userId = userRepository.findByEmail(email).orElseThrow().getId();
+        return enrich(postRepository.findBeforeFollowing(userId, cursor, PAGE_SIZE), email);
+    }
+
+    public long countNewerThanFollowing(Long sinceId, String email) {
+        Long userId = userRepository.findByEmail(email).orElseThrow().getId();
+        return postRepository.countNewerThanFollowing(userId, sinceId);
+    }
+
+    public List<PostResponse> getNewerThanFollowing(Long sinceId, String email) {
+        Long userId = userRepository.findByEmail(email).orElseThrow().getId();
+        return enrich(postRepository.findNewerThanFollowing(userId, sinceId), email);
+    }
+
     public PostResponse getById(Long id, String email) {
         PostRow row = postRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException("投稿が見つかりません"));

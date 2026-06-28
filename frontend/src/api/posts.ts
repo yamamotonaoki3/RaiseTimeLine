@@ -18,20 +18,22 @@ export async function getPostById(id: number): Promise<Post> {
   return data
 }
 
-export async function getPosts(params?: { cursor?: number }): Promise<Post[]> {
+export type FeedType = 'all' | 'following'
+
+export async function getPosts(params?: { cursor?: number; feed?: FeedType }): Promise<Post[]> {
   const { data } = await api.get<Post[]>('/api/posts', { params })
   return data
 }
 
-export async function getNewCount(sinceId: number): Promise<number> {
+export async function getNewCount(sinceId: number, feed: FeedType = 'all'): Promise<number> {
   const { data } = await api.get<{ count: number }>('/api/posts/new-count', {
-    params: { sinceId },
+    params: { sinceId, feed },
   })
   return data.count
 }
 
-export async function getNewerPosts(sinceId: number): Promise<Post[]> {
-  const { data } = await api.get<Post[]>('/api/posts/newer', { params: { sinceId } })
+export async function getNewerPosts(sinceId: number, feed: FeedType = 'all'): Promise<Post[]> {
+  const { data } = await api.get<Post[]>('/api/posts/newer', { params: { sinceId, feed } })
   return data
 }
 
