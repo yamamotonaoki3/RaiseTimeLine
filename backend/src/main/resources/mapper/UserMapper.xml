@@ -28,7 +28,8 @@
     <update id="update">
         UPDATE users
         SET display_name = #{displayName},
-            bio          = #{bio}
+            bio = #{bio}
+            <if test="avatarUrl != null">, avatar_url = #{avatarUrl}</if>
         WHERE id = #{id}
     </update>
 

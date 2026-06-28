@@ -17,5 +17,6 @@ public interface UserMapper {
 
     void insert(User user);
 
-    void update(@Param("id") Long id, @Param("displayName") String displayName, @Param("bio") String bio);
+    void update(@Param("id") Long id, @Param("displayName") String displayName,
+                @Param("bio") String bio, @Param("avatarUrl") String avatarUrl);
 }

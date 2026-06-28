@@ -32,7 +32,7 @@ public class UserRepository {
         userMapper.insert(user);
     }
 
-    public void update(Long id, String displayName, String bio) {
-        userMapper.update(id, displayName, bio);
+    public void update(Long id, String displayName, String bio, String avatarUrl) {
+        userMapper.update(id, displayName, bio, avatarUrl);
     }
 }

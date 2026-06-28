@@ -19,7 +19,7 @@ import { useAuth } from '../context/useAuth'
 const POLL_INTERVAL = 30000
 
 export default function HomePage() {
-  const { user, logout, updateDisplayName } = useAuth()
+  const { user, logout, updateDisplayName, updateAvatarUrl } = useAuth()
   const navigate = useNavigate()
   const [posts, setPosts] = useState<Post[]>([])
   const [hasMore, setHasMore] = useState(true)
@@ -146,11 +146,12 @@ export default function HomePage() {
     navigate('/login')
   }
 
-  const handleSaveProfile = async (displayName: string, bio: string) => {
+  const handleSaveProfile = async (displayName: string, bio: string, avatar?: File) => {
     if (!user) return
-    const updated = await updateUserProfile(user.userId, { displayName, bio })
+    const updated = await updateUserProfile(user.userId, displayName, bio, avatar)
     setMyProfile(updated)
     updateDisplayName(updated.displayName)
+    updateAvatarUrl(updated.avatarUrl)
     setShowEditModal(false)
   }
 
@@ -164,11 +165,14 @@ export default function HomePage() {
           <div className="nav-links">
             {user && (
               <div className="nav-user">
-                <Link to={`/users/${user.userId}`} className="nav-avatar">{initial}</Link>
+                <Link to={`/users/${user.userId}`} className="nav-avatar">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.displayName} />
+                  ) : (
+                    initial
+                  )}
+                </Link>
                 <Link to={`/users/${user.userId}`} className="nav-display-name">{user.displayName}</Link>
-                <button className="nav-link btn-ghost" onClick={() => setShowEditModal(true)}>
-                  ✏️
-                </button>
               </div>
             )}
             <button className="nav-link btn-ghost" onClick={handleLogout}>
@@ -187,7 +191,13 @@ export default function HomePage() {
           )}
 
           <div className="compose-box">
-            <div className="post-avatar">{initial}</div>
+            <div className="post-avatar">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.displayName} />
+              ) : (
+                initial
+              )}
+            </div>
             <button
               className="btn btn-primary"
               style={{ flex: 1 }}

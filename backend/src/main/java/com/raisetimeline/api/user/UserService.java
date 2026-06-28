@@ -5,6 +5,7 @@ import com.raisetimeline.api.exception.UserNotFoundException;
 import com.raisetimeline.api.follow.FollowRepository;
 import com.raisetimeline.api.post.PostRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class UserService {
@@ -12,13 +13,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
     private final PostRepository postRepository;
+    private final AvatarStorageService avatarStorageService;
 
     public UserService(UserRepository userRepository,
                        FollowRepository followRepository,
-                       PostRepository postRepository) {
+                       PostRepository postRepository,
+                       AvatarStorageService avatarStorageService) {
         this.userRepository = userRepository;
         this.followRepository = followRepository;
         this.postRepository = postRepository;
+        this.avatarStorageService = avatarStorageService;
     }
 
     public UserProfileResponse getProfile(Long targetUserId, String requestEmail) {
@@ -46,12 +50,16 @@ public class UserService {
     }
 
     public UserProfileResponse updateProfile(Long targetUserId, String requestEmail,
-                                             UpdateProfileRequest request) {
+                                             String displayName, String bio, MultipartFile avatar) {
         User me = userRepository.findByEmail(requestEmail).orElseThrow();
         if (!me.getId().equals(targetUserId)) {
             throw new ForbiddenException("このプロフィールを編集する権限がありません");
         }
-        userRepository.update(targetUserId, request.displayName(), request.bio());
+        String avatarUrl = null;
+        if (avatar != null && !avatar.isEmpty()) {
+            avatarUrl = avatarStorageService.store(avatar, me.getAvatarUrl());
+        }
+        userRepository.update(targetUserId, displayName, bio, avatarUrl);
         return getProfile(targetUserId, requestEmail);
     }
 }

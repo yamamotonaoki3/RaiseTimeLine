@@ -4,6 +4,7 @@ export interface Post {
   id: number
   userId: number
   displayName: string
+  avatarUrl: string | null
   content: string
   createdAt: string
   updatedAt: string

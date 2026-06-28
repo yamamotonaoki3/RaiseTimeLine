@@ -49,8 +49,8 @@ export default function UserProfilePage() {
     }
   }
 
-  const handleSaveProfile = async (displayName: string, bio: string) => {
-    const updated = await updateUserProfile(userId, { displayName, bio })
+  const handleSaveProfile = async (displayName: string, bio: string, avatar?: File) => {
+    const updated = await updateUserProfile(userId, displayName, bio, avatar)
     setProfile(updated)
     setShowEdit(false)
   }
@@ -86,7 +86,13 @@ export default function UserProfilePage() {
 
         <div className="card profile-card">
           <div className="profile-header">
-            <div className="profile-avatar">{initial}</div>
+            <div className="profile-avatar">
+              {profile.avatarUrl ? (
+                <img src={profile.avatarUrl} alt={profile.displayName} />
+              ) : (
+                initial
+              )}
+            </div>
             <div className="profile-info">
               <h2 className="profile-name">{profile.displayName}</h2>
               <p className="profile-bio">{profile.bio ?? '自己紹介はまだありません'}</p>

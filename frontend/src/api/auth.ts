@@ -5,6 +5,7 @@ export interface AuthResponse {
   userId: number
   displayName: string
   email: string
+  avatarUrl: string | null
 }
 
 export interface RefreshResponse {
@@ -12,6 +13,7 @@ export interface RefreshResponse {
   userId: number
   displayName: string
   email: string
+  avatarUrl: string | null
 }
 
 let currentAccessToken: string | null = null

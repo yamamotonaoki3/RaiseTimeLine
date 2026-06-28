@@ -36,7 +36,13 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
     <>
       <div className="post-card">
         <div className="post-card-inner">
-          <Link to={`/users/${post.userId}`} className="post-avatar">{initial}</Link>
+          <Link to={`/users/${post.userId}`} className="post-avatar">
+            {post.avatarUrl ? (
+              <img src={post.avatarUrl} alt={post.displayName} />
+            ) : (
+              initial
+            )}
+          </Link>
           <div className="post-body">
             <div className="post-meta">
               <Link to={`/users/${post.userId}`} className="post-author">{post.displayName}</Link>

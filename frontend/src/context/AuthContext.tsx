@@ -1,13 +1,7 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { type RefreshResponse, logout as apiLogout, setAccessToken } from '../api/auth'
-import { AuthContext } from './auth-context'
-
-interface User {
-  userId: number
-  displayName: string
-  email: string
-}
+import { type User, AuthContext } from './auth-context'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -18,7 +12,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .post<RefreshResponse>('/api/auth/refresh', null, { withCredentials: true })
       .then(({ data }) => {
         setAccessToken(data.accessToken)
-        setUser({ userId: data.userId, displayName: data.displayName, email: data.email })
+        setUser({
+          userId: data.userId,
+          displayName: data.displayName,
+          email: data.email,
+          avatarUrl: data.avatarUrl,
+        })
       })
       .catch(() => {})
       .finally(() => setLoading(false))
@@ -44,5 +43,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser((prev) => (prev ? { ...prev, displayName } : prev))
   }
 
-  return <AuthContext.Provider value={{ user, login, logout, updateDisplayName }}>{children}</AuthContext.Provider>
+  const updateAvatarUrl = (avatarUrl: string | null) => {
+    setUser((prev) => (prev ? { ...prev, avatarUrl } : prev))
+  }
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, updateDisplayName, updateAvatarUrl }}>
+      {children}
+    </AuthContext.Provider>
+  )
 }

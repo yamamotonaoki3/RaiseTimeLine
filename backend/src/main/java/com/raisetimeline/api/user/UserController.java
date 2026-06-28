@@ -3,19 +3,20 @@ package com.raisetimeline.api.user;
 import com.raisetimeline.api.follow.FollowService;
 import com.raisetimeline.api.post.PostResponse;
 import com.raisetimeline.api.post.PostService;
-import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/users")
@@ -36,11 +37,14 @@ public class UserController {
         return userService.getProfile(id, auth.getName());
     }
 
-    @PutMapping("/{id}")
-    public UserProfileResponse updateProfile(@PathVariable Long id,
-                                             @Valid @RequestBody UpdateProfileRequest request,
-                                             Authentication auth) {
-        return userService.updateProfile(id, auth.getName(), request);
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public UserProfileResponse updateProfile(
+            @PathVariable Long id,
+            @RequestParam String displayName,
+            @RequestParam(required = false) String bio,
+            @RequestParam(name = "avatar", required = false) MultipartFile avatar,
+            Authentication auth) {
+        return userService.updateProfile(id, auth.getName(), displayName, bio, avatar);
     }
 
     @GetMapping("/{id}/posts")
