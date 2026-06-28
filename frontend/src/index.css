@@ -728,11 +728,22 @@ a:hover {
   overflow: hidden;
 }
 
-.profile-avatar img {
+.profile-avatar img,
+.post-avatar img,
+.nav-avatar img,
+.user-card-avatar img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 50%;
+  background: transparent;
+}
+
+.profile-avatar:has(img),
+.post-avatar:has(img),
+.nav-avatar:has(img),
+.user-card-avatar:has(img) {
+  background: transparent;
 }
 
 .avatar-lg {
