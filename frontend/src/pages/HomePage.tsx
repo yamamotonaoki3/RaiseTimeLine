@@ -86,7 +86,7 @@ export default function HomePage() {
         if (newer.length > 0) {
           topIdRef.current = newer[0].id
           setPosts((prev) => [...newer, ...prev])
-          setNewCount(newer.length)
+          setNewCount((prev) => prev + newer.length)
         }
       } else {
         const refreshed = await getPosts()
