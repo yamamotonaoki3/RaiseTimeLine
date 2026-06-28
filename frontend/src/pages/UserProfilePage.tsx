@@ -57,8 +57,8 @@ export default function UserProfilePage() {
     setShowEdit(false)
   }
 
-  const handleUpdate = async (postId: number, content: string) => {
-    const updated = await updatePost(postId, content)
+  const handleUpdate = async (postId: number, content: string, image?: File, removeImage?: boolean) => {
+    const updated = await updatePost(postId, content, image, removeImage)
     setPosts(posts.map((p) => (p.id === postId ? updated : p)))
   }
 

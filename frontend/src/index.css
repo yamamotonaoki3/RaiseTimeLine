@@ -467,6 +467,44 @@ a:hover {
   color: #e0245e;
 }
 
+.post-image-preview {
+  margin-top: 8px;
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+}
+
+.post-image-preview__img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 12px;
+  display: block;
+}
+
+.post-image-preview__remove {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #536471;
+}
+
+.post-image-attach {
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.post-image {
+  margin-top: 8px;
+}
+
+.post-image__img {
+  max-width: 100%;
+  border-radius: 12px;
+  display: block;
+}
+
 /* ── Auth Pages ── */
 .auth-container {
   min-height: 100vh;

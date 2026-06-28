@@ -4,7 +4,7 @@
 <mapper namespace="com.raisetimeline.api.post.PostMapper">
 
     <select id="findLatest" resultType="com.raisetimeline.api.post.PostRow">
-        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.created_at, p.updated_at
+        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.image_url, p.created_at, p.updated_at
         FROM posts p
         JOIN users u ON p.user_id = u.id
         ORDER BY p.id DESC
@@ -12,7 +12,7 @@
     </select>
 
     <select id="findBefore" resultType="com.raisetimeline.api.post.PostRow">
-        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.created_at, p.updated_at
+        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.image_url, p.created_at, p.updated_at
         FROM posts p
         JOIN users u ON p.user_id = u.id
         WHERE p.id &lt; #{cursor}
@@ -21,7 +21,7 @@
     </select>
 
     <select id="findNewerThan" resultType="com.raisetimeline.api.post.PostRow">
-        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.created_at, p.updated_at
+        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.image_url, p.created_at, p.updated_at
         FROM posts p
         JOIN users u ON p.user_id = u.id
         WHERE p.id &gt; #{sinceId}
@@ -33,19 +33,19 @@
     </select>
 
     <select id="findById" resultType="com.raisetimeline.api.post.PostRow">
-        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.created_at, p.updated_at
+        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.image_url, p.created_at, p.updated_at
         FROM posts p
         JOIN users u ON p.user_id = u.id
         WHERE p.id = #{id}
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO posts (user_id, content, created_at, updated_at)
-        VALUES (#{userId}, #{content}, NOW(), NOW())
+        INSERT INTO posts (user_id, content, image_url, created_at, updated_at)
+        VALUES (#{userId}, #{content}, #{imageUrl}, NOW(), NOW())
     </insert>
 
     <update id="update">
-        UPDATE posts SET content = #{content}, updated_at = NOW() WHERE id = #{id}
+        UPDATE posts SET content = #{content}, image_url = #{imageUrl}, updated_at = NOW() WHERE id = #{id}
     </update>
 
     <delete id="delete">
@@ -53,7 +53,7 @@
     </delete>
 
     <select id="findLatestFollowing" resultType="com.raisetimeline.api.post.PostRow">
-        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.created_at, p.updated_at
+        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.image_url, p.created_at, p.updated_at
         FROM posts p
         JOIN users u ON p.user_id = u.id
         JOIN follows f ON f.followee_id = p.user_id
@@ -63,7 +63,7 @@
     </select>
 
     <select id="findBeforeFollowing" resultType="com.raisetimeline.api.post.PostRow">
-        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.created_at, p.updated_at
+        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.image_url, p.created_at, p.updated_at
         FROM posts p
         JOIN users u ON p.user_id = u.id
         JOIN follows f ON f.followee_id = p.user_id
@@ -79,7 +79,7 @@
     </select>
 
     <select id="findNewerThanFollowing" resultType="com.raisetimeline.api.post.PostRow">
-        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.created_at, p.updated_at
+        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.image_url, p.created_at, p.updated_at
         FROM posts p
         JOIN users u ON p.user_id = u.id
         JOIN follows f ON f.followee_id = p.user_id
@@ -88,7 +88,7 @@
     </select>
 
     <select id="findByUserId" resultType="com.raisetimeline.api.post.PostRow">
-        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.created_at, p.updated_at
+        SELECT p.id, p.user_id, u.display_name, u.avatar_url, p.content, p.image_url, p.created_at, p.updated_at
         FROM posts p
         JOIN users u ON p.user_id = u.id
         WHERE p.user_id = #{userId}
