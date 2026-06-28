@@ -80,28 +80,38 @@ export default function HomePage() {
   useEffect(() => {
     const timer = setInterval(async () => {
       if (topIdRef.current === 0) return
-      const count = await getNewCount(topIdRef.current)
-      setNewCount(count)
+
+      // 最新20件を取得して削除チェックとメタデータ更新に使う
       const refreshed = await getPosts()
+      const refreshedMap = new Map(refreshed.map((p) => [p.id, p]))
+      // refreshed の最小ID より古い投稿は取得範囲外のため削除チェックしない
+      const minRefreshedId = refreshed.length > 0 ? Math.min(...refreshed.map((p) => p.id)) : 0
+
+      // 新着チェック
+      const count = await getNewCount(topIdRef.current)
+      if (count > 0) {
+        const newer = await getNewerPosts(topIdRef.current)
+        if (newer.length > 0) {
+          topIdRef.current = newer[0].id
+          setNewCount((prev) => prev + newer.length)
+          setPosts((prev) => [...newer, ...prev])
+        }
+      }
+
+      // 削除チェック＆メタデータ更新（新着あり・なし両方で毎回実行）
       setPosts((prev) =>
-        prev.map((p) => {
-          const updated = refreshed.find((r) => r.id === p.id)
-          return updated
-            ? { ...p, likeCount: updated.likeCount, likedByMe: updated.likedByMe, commentCount: updated.commentCount }
-            : p
-        }),
+        prev
+          .filter((p) => p.id < minRefreshedId || refreshedMap.has(p.id))
+          .map((p) => {
+            const updated = refreshedMap.get(p.id)
+            return updated
+              ? { ...p, likeCount: updated.likeCount, likedByMe: updated.likedByMe, commentCount: updated.commentCount }
+              : p
+          }),
       )
     }, POLL_INTERVAL)
     return () => clearInterval(timer)
   }, [])
-
-  const handleShowNew = async () => {
-    const newer = await getNewerPosts(topIdRef.current)
-    if (newer.length === 0) return
-    topIdRef.current = newer[0].id
-    setPosts((prev) => [...newer, ...prev])
-    setNewCount(0)
-  }
 
   const handleCreate = async (content: string) => {
     const created = await createPost(content)
@@ -143,9 +153,9 @@ export default function HomePage() {
       <main className="main">
         <div className="container">
           {newCount > 0 && (
-            <button className="new-posts-banner" onClick={handleShowNew}>
-              {newCount}件の新しい投稿があります — クリックして表示
-            </button>
+            <div className="new-posts-banner" onClick={() => setNewCount(0)} style={{ cursor: 'pointer' }}>
+              {newCount}件の新しい投稿を表示しました
+            </div>
           )}
 
           <div className="compose-box">

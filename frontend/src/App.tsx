@@ -5,6 +5,8 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import HomePage from './pages/HomePage'
 import PostDetailPage from './pages/PostDetailPage'
+import UserProfilePage from './pages/UserProfilePage'
+import FollowListPage from './pages/FollowListPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
@@ -48,6 +50,30 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PostDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users/:id"
+        element={
+          <ProtectedRoute>
+            <UserProfilePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users/:id/followers"
+        element={
+          <ProtectedRoute>
+            <FollowListPage mode="followers" />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users/:id/following"
+        element={
+          <ProtectedRoute>
+            <FollowListPage mode="following" />
           </ProtectedRoute>
         }
       />

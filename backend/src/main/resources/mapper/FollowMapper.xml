@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.raisetimeline.api.follow.FollowMapper">
+
+    <insert id="insert">
+        INSERT INTO follows (follower_id, followee_id)
+        VALUES (#{followerId}, #{followeeId})
+        ON CONFLICT DO NOTHING
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM follows
+        WHERE follower_id = #{followerId}
+          AND followee_id = #{followeeId}
+    </delete>
+
+    <select id="exists" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM follows
+            WHERE follower_id = #{followerId}
+              AND followee_id = #{followeeId}
+        )
+    </select>
+
+    <select id="findFollowers" resultType="com.raisetimeline.api.user.User">
+        SELECT u.id, u.email, u.password_hash, u.username, u.display_name, u.avatar_url, u.bio, u.created_at
+        FROM follows f
+        JOIN users u ON u.id = f.follower_id
+        WHERE f.followee_id = #{followeeId}
+        ORDER BY f.created_at DESC
+    </select>
+
+    <select id="findFollowing" resultType="com.raisetimeline.api.user.User">
+        SELECT u.id, u.email, u.password_hash, u.username, u.display_name, u.avatar_url, u.bio, u.created_at
+        FROM follows f
+        JOIN users u ON u.id = f.followee_id
+        WHERE f.follower_id = #{followerId}
+        ORDER BY f.created_at DESC
+    </select>
+
+    <select id="countFollowers" resultType="long">
+        SELECT COUNT(*) FROM follows WHERE followee_id = #{followeeId}
+    </select>
+
+    <select id="countFollowing" resultType="long">
+        SELECT COUNT(*) FROM follows WHERE follower_id = #{followerId}
+    </select>
+
+</mapper>

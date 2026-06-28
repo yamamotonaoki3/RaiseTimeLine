@@ -36,10 +36,10 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
     <>
       <div className="post-card">
         <div className="post-card-inner">
-          <div className="post-avatar">{initial}</div>
+          <Link to={`/users/${post.userId}`} className="post-avatar">{initial}</Link>
           <div className="post-body">
             <div className="post-meta">
-              <span className="post-author">{post.displayName}</span>
+              <Link to={`/users/${post.userId}`} className="post-author">{post.displayName}</Link>
               <span className="post-date">{formattedDate}</span>
               {isEdited && <span className="edited-badge">編集済み</span>}
             </div>

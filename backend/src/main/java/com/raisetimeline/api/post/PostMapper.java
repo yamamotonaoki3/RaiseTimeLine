@@ -23,4 +23,6 @@ public interface PostMapper {
     void update(@Param("id") Long id, @Param("content") String content);
 
     void delete(@Param("id") Long id);
+
+    List<PostRow> findByUserId(@Param("userId") Long userId);
 }

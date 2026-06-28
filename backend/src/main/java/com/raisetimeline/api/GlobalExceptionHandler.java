@@ -1,12 +1,16 @@
 package com.raisetimeline.api;
 
+import com.raisetimeline.api.exception.AlreadyFollowingException;
+import com.raisetimeline.api.exception.CommentNotFoundException;
 import com.raisetimeline.api.exception.DuplicateDisplayNameException;
 import com.raisetimeline.api.exception.DuplicateEmailException;
 import com.raisetimeline.api.exception.DuplicateUsernameException;
-import com.raisetimeline.api.exception.CommentNotFoundException;
 import com.raisetimeline.api.exception.ForbiddenException;
 import com.raisetimeline.api.exception.InvalidRefreshTokenException;
+import com.raisetimeline.api.exception.NotFollowingException;
 import com.raisetimeline.api.exception.PostNotFoundException;
+import com.raisetimeline.api.exception.SelfFollowException;
+import com.raisetimeline.api.exception.UserNotFoundException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -68,6 +72,30 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, Object> handleCommentNotFound(CommentNotFoundException ex) {
         return Map.of("status", 404, "message", ex.getMessage());
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map<String, Object> handleUserNotFound(UserNotFoundException ex) {
+        return Map.of("status", 404, "message", ex.getMessage());
+    }
+
+    @ExceptionHandler(SelfFollowException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, Object> handleSelfFollow(SelfFollowException ex) {
+        return Map.of("status", 400, "message", ex.getMessage());
+    }
+
+    @ExceptionHandler(AlreadyFollowingException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, Object> handleAlreadyFollowing(AlreadyFollowingException ex) {
+        return Map.of("status", 409, "message", ex.getMessage());
+    }
+
+    @ExceptionHandler(NotFollowingException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, Object> handleNotFollowing(NotFollowingException ex) {
+        return Map.of("status", 400, "message", ex.getMessage());
     }
 
     @ExceptionHandler(ForbiddenException.class)

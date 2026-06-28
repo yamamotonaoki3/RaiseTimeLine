@@ -44,4 +44,8 @@ public class PostRepository {
     public void delete(Long id) {
         postMapper.delete(id);
     }
+
+    public List<PostRow> findByUserId(Long userId) {
+        return postMapper.findByUserId(userId);
+    }
 }

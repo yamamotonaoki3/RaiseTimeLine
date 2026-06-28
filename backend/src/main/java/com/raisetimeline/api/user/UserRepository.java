@@ -31,4 +31,8 @@ public class UserRepository {
     public void insert(User user) {
         userMapper.insert(user);
     }
+
+    public void update(Long id, String displayName, String bio) {
+        userMapper.update(id, displayName, bio);
+    }
 }

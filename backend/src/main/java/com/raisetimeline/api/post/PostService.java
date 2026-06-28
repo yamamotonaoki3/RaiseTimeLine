@@ -76,6 +76,10 @@ public class PostService {
         return enrich(List.of(row), email).get(0);
     }
 
+    public List<PostResponse> getByUserId(Long userId, String email) {
+        return enrich(postRepository.findByUserId(userId), email);
+    }
+
     public void delete(Long id, String email) {
         PostRow existing = postRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException("投稿が見つかりません"));
