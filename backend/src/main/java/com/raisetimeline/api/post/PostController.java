@@ -29,10 +29,14 @@ public class PostController {
     @GetMapping
     public ResponseEntity<List<PostResponse>> getPosts(
             @RequestParam(required = false) Long cursor,
+            @RequestParam(required = false, defaultValue = "all") String feed,
             Authentication authentication) {
+        boolean following = "following".equals(feed);
         List<PostResponse> posts = cursor == null
-                ? postService.getLatest(authentication.getName())
-                : postService.getBefore(cursor, authentication.getName());
+                ? (following ? postService.getLatestFollowing(authentication.getName())
+                             : postService.getLatest(authentication.getName()))
+                : (following ? postService.getBeforeFollowing(cursor, authentication.getName())
+                             : postService.getBefore(cursor, authentication.getName()));
         return ResponseEntity.ok(posts);
     }
 
@@ -45,16 +49,24 @@ public class PostController {
 
     @GetMapping("/new-count")
     public ResponseEntity<Map<String, Long>> getNewCount(
-            @RequestParam Long sinceId) {
-        long count = postService.countNewerThan(sinceId);
+            @RequestParam Long sinceId,
+            @RequestParam(required = false, defaultValue = "all") String feed,
+            Authentication authentication) {
+        long count = "following".equals(feed)
+                ? postService.countNewerThanFollowing(sinceId, authentication.getName())
+                : postService.countNewerThan(sinceId);
         return ResponseEntity.ok(Map.of("count", count));
     }
 
     @GetMapping("/newer")
     public ResponseEntity<List<PostResponse>> getNewer(
             @RequestParam Long sinceId,
+            @RequestParam(required = false, defaultValue = "all") String feed,
             Authentication authentication) {
-        return ResponseEntity.ok(postService.getNewerThan(sinceId, authentication.getName()));
+        List<PostResponse> posts = "following".equals(feed)
+                ? postService.getNewerThanFollowing(sinceId, authentication.getName())
+                : postService.getNewerThan(sinceId, authentication.getName());
+        return ResponseEntity.ok(posts);
     }
 
     @PostMapping

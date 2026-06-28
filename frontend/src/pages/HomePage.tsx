@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
+  type FeedType,
   type Post,
   createPost,
   deletePost,
@@ -19,6 +20,7 @@ const POLL_INTERVAL = 30000
 
 export default function HomePage() {
   const { user, updateDisplayName, updateAvatarUrl } = useAuth()
+  const [feed, setFeed] = useState<FeedType>('following')
   const [posts, setPosts] = useState<Post[]>([])
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -32,6 +34,8 @@ export default function HomePage() {
       getUserProfile(user.userId).then(setMyProfile).catch(() => {})
     }
   }, [user?.userId])
+
+  const feedRef = useRef<FeedType>('following')
   const topIdRef = useRef<number>(0)
   const cursorRef = useRef<number | null>(null)
   const hasMoreRef = useRef(true)
@@ -43,7 +47,9 @@ export default function HomePage() {
     loadingRef.current = true
     setLoading(true)
     try {
-      const params = cursorRef.current != null ? { cursor: cursorRef.current } : undefined
+      const params = cursorRef.current != null
+        ? { cursor: cursorRef.current, feed: feedRef.current }
+        : { feed: feedRef.current }
       const fetched = await getPosts(params)
       if (fetched.length === 0) {
         hasMoreRef.current = false
@@ -68,9 +74,20 @@ export default function HomePage() {
     }
   }, [])
 
+  const switchFeed = useCallback((f: FeedType) => {
+    feedRef.current = f
+    setFeed(f)
+    setPosts([])
+    setNewCount(0)
+    topIdRef.current = 0
+    cursorRef.current = null
+    hasMoreRef.current = true
+    setHasMore(true)
+  }, [])
+
   useEffect(() => {
     loadMore()
-  }, [loadMore])
+  }, [feed, loadMore])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -89,17 +106,15 @@ export default function HomePage() {
   useEffect(() => {
     const timer = setInterval(async () => {
       if (topIdRef.current === 0) return
+      const currentFeed = feedRef.current
 
-      // 最新20件を取得して削除チェックとメタデータ更新に使う
-      const refreshed = await getPosts()
+      const refreshed = await getPosts({ feed: currentFeed })
       const refreshedMap = new Map(refreshed.map((p) => [p.id, p]))
-      // refreshed の最小ID より古い投稿は取得範囲外のため削除チェックしない
       const minRefreshedId = refreshed.length > 0 ? Math.min(...refreshed.map((p) => p.id)) : 0
 
-      // 新着チェック
-      const count = await getNewCount(topIdRef.current)
+      const count = await getNewCount(topIdRef.current, currentFeed)
       if (count > 0) {
-        const newer = await getNewerPosts(topIdRef.current)
+        const newer = await getNewerPosts(topIdRef.current, currentFeed)
         if (newer.length > 0) {
           topIdRef.current = newer[0].id
           setNewCount((prev) => prev + newer.length)
@@ -107,7 +122,6 @@ export default function HomePage() {
         }
       }
 
-      // 削除チェック＆メタデータ更新（新着あり・なし両方で毎回実行）
       setPosts((prev) =>
         prev
           .filter((p) => p.id < minRefreshedId || refreshedMap.has(p.id))
@@ -150,6 +164,10 @@ export default function HomePage() {
 
   const initial = user?.displayName.charAt(0).toUpperCase() ?? '?'
 
+  const emptyMessage = feed === 'following'
+    ? 'フォロー中のユーザーの投稿がありません。誰かをフォローしてみましょう！'
+    : 'まだ投稿がありません。最初の投稿をしてみましょう！'
+
   return (
     <>
       <main className="main">
@@ -177,6 +195,21 @@ export default function HomePage() {
             </button>
           </div>
 
+          <div className="tabs">
+            <button
+              className={`tab-btn${feed === 'following' ? ' active' : ''}`}
+              onClick={() => switchFeed('following')}
+            >
+              フォロー中
+            </button>
+            <button
+              className={`tab-btn${feed === 'all' ? ' active' : ''}`}
+              onClick={() => switchFeed('all')}
+            >
+              全体
+            </button>
+          </div>
+
           <div className="post-list">
             {posts.map((post) => (
               <PostCard
@@ -193,7 +226,7 @@ export default function HomePage() {
               <p className="timeline-status">これ以上の投稿はありません</p>
             )}
             {!loading && posts.length === 0 && (
-              <p className="timeline-status">まだ投稿がありません。最初の投稿をしてみましょう！</p>
+              <p className="timeline-status">{emptyMessage}</p>
             )}
           </div>
         </div>

@@ -24,5 +24,14 @@ public interface PostMapper {
 
     void delete(@Param("id") Long id);
 
+    List<PostRow> findLatestFollowing(@Param("userId") Long userId, @Param("limit") int limit);
+
+    List<PostRow> findBeforeFollowing(
+            @Param("userId") Long userId, @Param("cursor") Long cursor, @Param("limit") int limit);
+
+    long countNewerThanFollowing(@Param("userId") Long userId, @Param("sinceId") Long sinceId);
+
+    List<PostRow> findNewerThanFollowing(@Param("userId") Long userId, @Param("sinceId") Long sinceId);
+
     List<PostRow> findByUserId(@Param("userId") Long userId);
 }
