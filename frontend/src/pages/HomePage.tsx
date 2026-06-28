@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
 import {
   type Post,
   createPost,
@@ -19,8 +18,7 @@ import { useAuth } from '../context/useAuth'
 const POLL_INTERVAL = 30000
 
 export default function HomePage() {
-  const { user, logout, updateDisplayName } = useAuth()
-  const navigate = useNavigate()
+  const { user, updateDisplayName, updateAvatarUrl } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
@@ -141,16 +139,12 @@ export default function HomePage() {
     setPosts((prev) => prev.filter((p) => p.id !== id))
   }
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/login')
-  }
-
-  const handleSaveProfile = async (displayName: string, bio: string) => {
+  const handleSaveProfile = async (displayName: string, bio: string, avatar?: File) => {
     if (!user) return
-    const updated = await updateUserProfile(user.userId, { displayName, bio })
+    const updated = await updateUserProfile(user.userId, displayName, bio, avatar)
     setMyProfile(updated)
     updateDisplayName(updated.displayName)
+    updateAvatarUrl(updated.avatarUrl)
     setShowEditModal(false)
   }
 
@@ -158,26 +152,6 @@ export default function HomePage() {
 
   return (
     <>
-      <nav className="nav">
-        <div className="nav-inner">
-          <span className="nav-logo">RaiseTimeLine</span>
-          <div className="nav-links">
-            {user && (
-              <div className="nav-user">
-                <Link to={`/users/${user.userId}`} className="nav-avatar">{initial}</Link>
-                <Link to={`/users/${user.userId}`} className="nav-display-name">{user.displayName}</Link>
-                <button className="nav-link btn-ghost" onClick={() => setShowEditModal(true)}>
-                  ✏️
-                </button>
-              </div>
-            )}
-            <button className="nav-link btn-ghost" onClick={handleLogout}>
-              ログアウト
-            </button>
-          </div>
-        </div>
-      </nav>
-
       <main className="main">
         <div className="container">
           {newCount > 0 && (
@@ -187,7 +161,13 @@ export default function HomePage() {
           )}
 
           <div className="compose-box">
-            <div className="post-avatar">{initial}</div>
+            <div className="post-avatar">
+              {user?.avatarUrl ? (
+                <img src={user.avatarUrl} alt={user.displayName} />
+              ) : (
+                initial
+              )}
+            </div>
             <button
               className="btn btn-primary"
               style={{ flex: 1 }}

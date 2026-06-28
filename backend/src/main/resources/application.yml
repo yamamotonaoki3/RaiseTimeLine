@@ -11,6 +11,17 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+  web:
+    resources:
+      static-locations: classpath:/static/,file:./uploads/
+
+app:
+  upload:
+    dir: uploads/avatars
 
 mybatis:
   configuration:

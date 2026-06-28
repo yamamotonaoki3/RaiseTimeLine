@@ -39,6 +39,7 @@ export default function RegisterPage() {
         userId: data.userId,
         displayName: data.displayName,
         email: data.email,
+        avatarUrl: data.avatarUrl,
       })
       navigate('/')
     } catch (err: unknown) {

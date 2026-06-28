@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { useAuth } from './context/useAuth'
+import Layout from './components/Layout'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import HomePage from './pages/HomePage'
@@ -41,7 +42,7 @@ function AppRoutes() {
         path="/"
         element={
           <ProtectedRoute>
-            <HomePage />
+            <Layout><HomePage /></Layout>
           </ProtectedRoute>
         }
       />
@@ -49,7 +50,7 @@ function AppRoutes() {
         path="/posts/:id"
         element={
           <ProtectedRoute>
-            <PostDetailPage />
+            <Layout><PostDetailPage /></Layout>
           </ProtectedRoute>
         }
       />
@@ -57,7 +58,7 @@ function AppRoutes() {
         path="/users/:id"
         element={
           <ProtectedRoute>
-            <UserProfilePage />
+            <Layout><UserProfilePage /></Layout>
           </ProtectedRoute>
         }
       />
@@ -65,7 +66,7 @@ function AppRoutes() {
         path="/users/:id/followers"
         element={
           <ProtectedRoute>
-            <FollowListPage mode="followers" />
+            <Layout><FollowListPage mode="followers" /></Layout>
           </ProtectedRoute>
         }
       />
@@ -73,7 +74,7 @@ function AppRoutes() {
         path="/users/:id/following"
         element={
           <ProtectedRoute>
-            <FollowListPage mode="following" />
+            <Layout><FollowListPage mode="following" /></Layout>
           </ProtectedRoute>
         }
       />

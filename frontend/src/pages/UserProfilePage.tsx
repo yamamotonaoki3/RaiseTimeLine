@@ -16,7 +16,7 @@ import { useAuth } from '../context/useAuth'
 
 export default function UserProfilePage() {
   const { id } = useParams<{ id: string }>()
-  const { user } = useAuth()
+  const { user, updateDisplayName, updateAvatarUrl } = useAuth()
   const navigate = useNavigate()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -49,9 +49,11 @@ export default function UserProfilePage() {
     }
   }
 
-  const handleSaveProfile = async (displayName: string, bio: string) => {
-    const updated = await updateUserProfile(userId, { displayName, bio })
+  const handleSaveProfile = async (displayName: string, bio: string, avatar?: File) => {
+    const updated = await updateUserProfile(userId, displayName, bio, avatar)
     setProfile(updated)
+    updateDisplayName(updated.displayName)
+    updateAvatarUrl(updated.avatarUrl)
     setShowEdit(false)
   }
 
@@ -86,7 +88,13 @@ export default function UserProfilePage() {
 
         <div className="card profile-card">
           <div className="profile-header">
-            <div className="profile-avatar">{initial}</div>
+            <div className="profile-avatar">
+              {profile.avatarUrl ? (
+                <img src={profile.avatarUrl} alt={profile.displayName} />
+              ) : (
+                initial
+              )}
+            </div>
             <div className="profile-info">
               <h2 className="profile-name">{profile.displayName}</h2>
               <p className="profile-bio">{profile.bio ?? '自己紹介はまだありません'}</p>

@@ -1,6 +1,7 @@
 package com.raisetimeline.api;
 
 import com.raisetimeline.api.exception.AlreadyFollowingException;
+import com.raisetimeline.api.exception.BadRequestException;
 import com.raisetimeline.api.exception.CommentNotFoundException;
 import com.raisetimeline.api.exception.DuplicateDisplayNameException;
 import com.raisetimeline.api.exception.DuplicateEmailException;
@@ -78,6 +79,12 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, Object> handleUserNotFound(UserNotFoundException ex) {
         return Map.of("status", 404, "message", ex.getMessage());
+    }
+
+    @ExceptionHandler(BadRequestException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, Object> handleBadRequest(BadRequestException ex) {
+        return Map.of("status", 400, "message", ex.getMessage());
     }
 
     @ExceptionHandler(SelfFollowException.class)

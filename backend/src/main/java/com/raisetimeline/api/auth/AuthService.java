@@ -55,7 +55,8 @@ public class AuthService {
 
         String accessToken = jwtUtil.generateAccessToken(user.getEmail());
         String refreshToken = refreshTokenService.create(user.getId());
-        AuthResponse response = new AuthResponse(accessToken, user.getId(), user.getDisplayName(), user.getEmail());
+        AuthResponse response = new AuthResponse(
+                accessToken, user.getId(), user.getDisplayName(), user.getEmail(), user.getAvatarUrl());
         return new TokenPair(response, refreshToken);
     }
 
@@ -66,7 +67,8 @@ public class AuthService {
         User user = userRepository.findByEmail(request.email()).orElseThrow();
         String accessToken = jwtUtil.generateAccessToken(user.getEmail());
         String refreshToken = refreshTokenService.create(user.getId());
-        AuthResponse response = new AuthResponse(accessToken, user.getId(), user.getDisplayName(), user.getEmail());
+        AuthResponse response = new AuthResponse(
+                accessToken, user.getId(), user.getDisplayName(), user.getEmail(), user.getAvatarUrl());
         return new TokenPair(response, refreshToken);
     }
 
@@ -76,7 +78,7 @@ public class AuthService {
         String newRefreshToken = refreshTokenService.create(user.getId());
         String newAccessToken = jwtUtil.generateAccessToken(user.getEmail());
         RefreshResponse response = new RefreshResponse(
-                newAccessToken, user.getId(), user.getDisplayName(), user.getEmail());
+                newAccessToken, user.getId(), user.getDisplayName(), user.getEmail(), user.getAvatarUrl());
         return new RefreshResult(response, newRefreshToken);
     }
 

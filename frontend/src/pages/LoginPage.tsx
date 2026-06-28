@@ -21,6 +21,7 @@ export default function LoginPage() {
         userId: data.userId,
         displayName: data.displayName,
         email: data.email,
+        avatarUrl: data.avatarUrl,
       })
       navigate('/')
     } catch (err: unknown) {

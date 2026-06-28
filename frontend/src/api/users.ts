@@ -20,11 +20,6 @@ export interface UserSummary {
   followedByMe: boolean
 }
 
-export interface UpdateProfileRequest {
-  displayName: string
-  bio: string
-}
-
 export async function getUserProfile(userId: number): Promise<UserProfile> {
   const { data } = await api.get<UserProfile>(`/api/users/${userId}`)
   return data
@@ -32,9 +27,15 @@ export async function getUserProfile(userId: number): Promise<UserProfile> {
 
 export async function updateUserProfile(
   userId: number,
-  body: UpdateProfileRequest,
+  displayName: string,
+  bio: string,
+  avatar?: File,
 ): Promise<UserProfile> {
-  const { data } = await api.put<UserProfile>(`/api/users/${userId}`, body)
+  const form = new FormData()
+  form.append('displayName', displayName)
+  form.append('bio', bio)
+  if (avatar) form.append('avatar', avatar)
+  const { data } = await api.put<UserProfile>(`/api/users/${userId}`, form)
   return data
 }
 

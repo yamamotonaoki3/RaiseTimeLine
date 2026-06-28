@@ -114,6 +114,7 @@ public class PostService {
                 r.id(),
                 r.userId(),
                 r.displayName(),
+                r.avatarUrl(),
                 r.content(),
                 r.createdAt(),
                 r.updatedAt(),
