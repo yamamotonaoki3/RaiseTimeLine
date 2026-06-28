@@ -80,23 +80,29 @@ export default function HomePage() {
   useEffect(() => {
     const timer = setInterval(async () => {
       if (topIdRef.current === 0) return
+      const refreshed = await getPosts()
+      const refreshedMap = new Map(refreshed.map((p) => [p.id, p]))
+
       const count = await getNewCount(topIdRef.current)
       if (count > 0) {
         const newer = await getNewerPosts(topIdRef.current)
         if (newer.length > 0) {
           topIdRef.current = newer[0].id
-          setPosts((prev) => [...newer, ...prev])
+          setPosts((prev) => {
+            const existingIds = new Set(refreshed.map((p) => p.id))
+            const deduped = prev.filter((p) => existingIds.has(p.id))
+            return [...newer, ...deduped]
+          })
           setNewCount((prev) => prev + newer.length)
         }
       } else {
-        const refreshed = await getPosts()
         setPosts((prev) =>
-          prev.map((p) => {
-            const updated = refreshed.find((r) => r.id === p.id)
-            return updated
-              ? { ...p, likeCount: updated.likeCount, likedByMe: updated.likedByMe, commentCount: updated.commentCount }
-              : p
-          }),
+          prev
+            .filter((p) => refreshedMap.has(p.id))
+            .map((p) => {
+              const updated = refreshedMap.get(p.id)!
+              return { ...p, likeCount: updated.likeCount, likedByMe: updated.likedByMe, commentCount: updated.commentCount }
+            }),
         )
       }
     }, POLL_INTERVAL)
