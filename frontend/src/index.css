@@ -874,9 +874,11 @@ a:hover {
   font-weight: 500;
   color: #536471;
   background: transparent;
+  border: none;
   border-bottom: 2px solid transparent;
   transition: color 0.15s, border-color 0.15s;
   text-decoration: none;
+  cursor: pointer;
 }
 
 .tab-btn:hover {
