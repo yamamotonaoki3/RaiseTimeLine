@@ -40,5 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>
+  const updateDisplayName = (displayName: string) => {
+    setUser((prev) => (prev ? { ...prev, displayName } : prev))
+  }
+
+  return <AuthContext.Provider value={{ user, login, logout, updateDisplayName }}>{children}</AuthContext.Provider>
 }

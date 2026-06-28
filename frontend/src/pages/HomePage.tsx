@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   type Post,
   createPost,
@@ -9,20 +9,31 @@ import {
   getPosts,
   updatePost,
 } from '../api/posts'
+import type { UserProfile } from '../api/users'
+import { getUserProfile, updateUserProfile } from '../api/users'
 import CreatePostModal from '../components/CreatePostModal'
 import PostCard from '../components/PostCard'
+import ProfileEditModal from '../components/ProfileEditModal'
 import { useAuth } from '../context/useAuth'
 
 const POLL_INTERVAL = 30000
 
 export default function HomePage() {
-  const { user, logout } = useAuth()
+  const { user, logout, updateDisplayName } = useAuth()
   const navigate = useNavigate()
   const [posts, setPosts] = useState<Post[]>([])
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
   const [newCount, setNewCount] = useState(0)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [myProfile, setMyProfile] = useState<UserProfile | null>(null)
+
+  useEffect(() => {
+    if (user?.userId) {
+      getUserProfile(user.userId).then(setMyProfile).catch(() => {})
+    }
+  }, [user?.userId])
   const topIdRef = useRef<number>(0)
   const cursorRef = useRef<number | null>(null)
   const hasMoreRef = useRef(true)
@@ -135,6 +146,14 @@ export default function HomePage() {
     navigate('/login')
   }
 
+  const handleSaveProfile = async (displayName: string, bio: string) => {
+    if (!user) return
+    const updated = await updateUserProfile(user.userId, { displayName, bio })
+    setMyProfile(updated)
+    updateDisplayName(updated.displayName)
+    setShowEditModal(false)
+  }
+
   const initial = user?.displayName.charAt(0).toUpperCase() ?? '?'
 
   return (
@@ -143,6 +162,15 @@ export default function HomePage() {
         <div className="nav-inner">
           <span className="nav-logo">RaiseTimeLine</span>
           <div className="nav-links">
+            {user && (
+              <div className="nav-user">
+                <Link to={`/users/${user.userId}`} className="nav-avatar">{initial}</Link>
+                <Link to={`/users/${user.userId}`} className="nav-display-name">{user.displayName}</Link>
+                <button className="nav-link btn-ghost" onClick={() => setShowEditModal(true)}>
+                  ✏️
+                </button>
+              </div>
+            )}
             <button className="nav-link btn-ghost" onClick={handleLogout}>
               ログアウト
             </button>
@@ -195,6 +223,14 @@ export default function HomePage() {
         <CreatePostModal
           onSubmit={handleCreate}
           onClose={() => setShowCreateModal(false)}
+        />
+      )}
+
+      {showEditModal && myProfile && (
+        <ProfileEditModal
+          profile={myProfile}
+          onSave={handleSaveProfile}
+          onClose={() => setShowEditModal(false)}
         />
       )}
     </>

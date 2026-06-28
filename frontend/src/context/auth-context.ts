@@ -10,6 +10,7 @@ export interface AuthContextType {
   user: User | null
   login: (accessToken: string, user: User) => void
   logout: () => Promise<void>
+  updateDisplayName: (displayName: string) => void
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null)
