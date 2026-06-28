@@ -80,34 +80,35 @@ export default function HomePage() {
   useEffect(() => {
     const timer = setInterval(async () => {
       if (topIdRef.current === 0) return
+
+      // 最新20件を取得して削除チェックとメタデータ更新に使う
       const refreshed = await getPosts()
       const refreshedMap = new Map(refreshed.map((p) => [p.id, p]))
-      // refreshed の最小ID。これより古い投稿は取得範囲外なので削除チェック対象外
+      // refreshed の最小ID より古い投稿は取得範囲外のため削除チェックしない
       const minRefreshedId = refreshed.length > 0 ? Math.min(...refreshed.map((p) => p.id)) : 0
 
+      // 新着チェック
       const count = await getNewCount(topIdRef.current)
       if (count > 0) {
         const newer = await getNewerPosts(topIdRef.current)
         if (newer.length > 0) {
           topIdRef.current = newer[0].id
-          setPosts((prev) => {
-            const filtered = prev.filter((p) => p.id < minRefreshedId || refreshedMap.has(p.id))
-            return [...newer, ...filtered]
-          })
           setNewCount((prev) => prev + newer.length)
+          setPosts((prev) => [...newer, ...prev])
         }
-      } else {
-        setPosts((prev) =>
-          prev
-            .filter((p) => p.id < minRefreshedId || refreshedMap.has(p.id))
-            .map((p) => {
-              const updated = refreshedMap.get(p.id)
-              return updated
-                ? { ...p, likeCount: updated.likeCount, likedByMe: updated.likedByMe, commentCount: updated.commentCount }
-                : p
-            }),
-        )
       }
+
+      // 削除チェック＆メタデータ更新（新着あり・なし両方で毎回実行）
+      setPosts((prev) =>
+        prev
+          .filter((p) => p.id < minRefreshedId || refreshedMap.has(p.id))
+          .map((p) => {
+            const updated = refreshedMap.get(p.id)
+            return updated
+              ? { ...p, likeCount: updated.likeCount, likedByMe: updated.likedByMe, commentCount: updated.commentCount }
+              : p
+          }),
+      )
     }, POLL_INTERVAL)
     return () => clearInterval(timer)
   }, [])
