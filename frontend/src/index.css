@@ -44,6 +44,7 @@ a:hover {
   font-size: 20px;
   font-weight: 800;
   color: #1d9bf0;
+  text-decoration: none;
 }
 
 .nav-links {
@@ -814,6 +815,7 @@ a:hover {
   border-radius: 50%;
   background: #1d9bf0;
   color: #fff;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;

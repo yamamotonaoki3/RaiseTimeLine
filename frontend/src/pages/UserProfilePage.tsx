@@ -16,7 +16,7 @@ import { useAuth } from '../context/useAuth'
 
 export default function UserProfilePage() {
   const { id } = useParams<{ id: string }>()
-  const { user } = useAuth()
+  const { user, updateDisplayName, updateAvatarUrl } = useAuth()
   const navigate = useNavigate()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -52,6 +52,8 @@ export default function UserProfilePage() {
   const handleSaveProfile = async (displayName: string, bio: string, avatar?: File) => {
     const updated = await updateUserProfile(userId, displayName, bio, avatar)
     setProfile(updated)
+    updateDisplayName(updated.displayName)
+    updateAvatarUrl(updated.avatarUrl)
     setShowEdit(false)
   }
 

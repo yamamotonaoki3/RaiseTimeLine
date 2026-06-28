@@ -30,7 +30,11 @@ export default function UserCard({ user, currentUserId }: Props) {
   return (
     <div className="user-card">
       <Link to={`/users/${user.id}`} className="user-card-avatar">
-        {initial}
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt={user.displayName} />
+        ) : (
+          initial
+        )}
       </Link>
       <div className="user-card-body">
         <Link to={`/users/${user.id}`} className="user-card-name">
