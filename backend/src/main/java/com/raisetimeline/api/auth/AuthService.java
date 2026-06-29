@@ -51,6 +51,7 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setUsername(request.username());
         user.setDisplayName(request.displayName());
+        user.setYomi(request.yomi());
         userRepository.insert(user);
 
         String accessToken = jwtUtil.generateAccessToken(user.getEmail());

@@ -8,6 +8,7 @@ import HomePage from './pages/HomePage'
 import PostDetailPage from './pages/PostDetailPage'
 import UserProfilePage from './pages/UserProfilePage'
 import FollowListPage from './pages/FollowListPage'
+import SearchPage from './pages/SearchPage'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth()
@@ -75,6 +76,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Layout><FollowListPage mode="following" /></Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/search"
+        element={
+          <ProtectedRoute>
+            <Layout><SearchPage /></Layout>
           </ProtectedRoute>
         }
       />

@@ -81,10 +81,11 @@ export async function register(
   username: string,
   displayName: string,
   password: string,
+  yomi?: string,
 ): Promise<AuthResponse> {
   const { data } = await axios.post<AuthResponse>(
     '/api/auth/register',
-    { email, username, displayName, password },
+    { email, username, displayName, password, yomi },
     { withCredentials: true },
   )
   return data
