@@ -11,8 +11,10 @@ erDiagram
     users {
         bigserial id PK
         varchar email
+        varchar username
         varchar password_hash
         varchar display_name
+        varchar yomi
         varchar avatar_url
         varchar bio
         timestamp created_at
@@ -64,8 +66,10 @@ erDiagram
 | --- | --- | --- | --- |
 | id | BIGSERIAL | ○ | PK |
 | email | VARCHAR(255) | ○ | UNIQUE。ログインに使用 |
+| username | VARCHAR(50) | ○ | UNIQUE。英数字・アンダースコアのみ |
 | password_hash | VARCHAR(255) | ○ | BCrypt によるハッシュ |
 | display_name | VARCHAR(50) | ○ | 表示名 |
+| yomi | VARCHAR(100) | — | 読み仮名（検索用）。ひらがな推奨 |
 | avatar_url | VARCHAR(512) | — | S3 の URL。未設定時はデフォルト画像 |
 | bio | VARCHAR(160) | — | 自己紹介文 |
 | created_at | TIMESTAMP | ○ | 登録日時 |
