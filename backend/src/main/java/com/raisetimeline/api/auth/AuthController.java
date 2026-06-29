@@ -1,5 +1,8 @@
 package com.raisetimeline.api.auth;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -15,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "認証", description = "ユーザー登録・ログイン・ログアウト・トークン管理")
 public class AuthController {
 
     private static final String REFRESH_TOKEN_COOKIE = "refreshToken";
@@ -27,6 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "ユーザー登録", description = "新規ユーザーを登録し、アクセストークンを返却します")
     public ResponseEntity<AuthResponse> register(
             @RequestBody @Valid RegisterRequest request,
             HttpServletResponse response) {
@@ -36,6 +41,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "ログイン", description = "メールアドレスとパスワードで認証し、アクセストークンを返却します")
     public ResponseEntity<AuthResponse> login(
             @RequestBody @Valid LoginRequest request,
             HttpServletResponse response) {
@@ -45,6 +51,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @Operation(summary = "トークン更新", description = "Cookie のリフレッシュトークンを使用して新しいアクセストークンを取得します")
     public ResponseEntity<RefreshResponse> refresh(
             HttpServletRequest request,
             HttpServletResponse response) {
@@ -55,6 +62,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "ログアウト", description = "リフレッシュトークンを無効化してセッションを終了します")
     public ResponseEntity<Void> logout(
             HttpServletRequest request,
             HttpServletResponse response) {
@@ -65,6 +73,8 @@ public class AuthController {
     }
 
     @GetMapping("/me")
+    @Operation(summary = "ログインユーザー情報取得", description = "現在ログイン中のユーザー情報を返却します")
+    @SecurityRequirement(name = "bearer-jwt")
     public ResponseEntity<MeResponse> getCurrentUser(Authentication authentication) {
         return authService.getCurrentUser(authentication.getName())
                 .map(ResponseEntity::ok)

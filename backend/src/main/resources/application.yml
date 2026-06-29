@@ -35,3 +35,13 @@ jwt:
   secret: raisetimeline-secret-key-must-be-at-least-32-characters-long
   access-expiration: 900000
   refresh-expiration: 604800000
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    operationsSorter: method
+    tagsSorter: alpha
+  default-produces-media-type: application/json

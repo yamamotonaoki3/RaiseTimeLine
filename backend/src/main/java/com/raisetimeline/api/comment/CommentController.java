@@ -1,5 +1,8 @@
 package com.raisetimeline.api.comment;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.HttpStatus;
@@ -15,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/posts/{postId}/comments")
+@Tag(name = "コメント", description = "投稿へのコメント取得・作成・削除")
+@SecurityRequirement(name = "bearer-jwt")
 public class CommentController {
 
     private final CommentService commentService;
@@ -24,11 +29,13 @@ public class CommentController {
     }
 
     @GetMapping
+    @Operation(summary = "コメント一覧取得")
     public ResponseEntity<List<CommentResponse>> getComments(@PathVariable Long postId) {
         return ResponseEntity.ok(commentService.getByPostId(postId));
     }
 
     @PostMapping
+    @Operation(summary = "コメント作成")
     public ResponseEntity<CommentResponse> create(
             @PathVariable Long postId,
             @RequestBody @Valid CommentRequest request,
@@ -38,6 +45,7 @@ public class CommentController {
     }
 
     @DeleteMapping("/{commentId}")
+    @Operation(summary = "コメント削除", description = "本人のコメントを削除します")
     public ResponseEntity<Void> delete(
             @PathVariable Long postId,
             @PathVariable Long commentId,
