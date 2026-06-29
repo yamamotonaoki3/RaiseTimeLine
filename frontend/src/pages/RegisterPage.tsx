@@ -16,6 +16,7 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('')
   const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
+  const [yomi, setYomi] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirmation, setPasswordConfirmation] = useState('')
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({})
@@ -34,7 +35,7 @@ export default function RegisterPage() {
 
     setLoading(true)
     try {
-      const data = await apiRegister(email, username, displayName, password)
+      const data = await apiRegister(email, username, displayName, password, yomi || undefined)
       login(data.accessToken, {
         userId: data.userId,
         displayName: data.displayName,
@@ -104,6 +105,17 @@ export default function RegisterPage() {
             {fieldErrors.displayName && <p className="error-text">{fieldErrors.displayName}</p>}
           </div>
           <div className="form-group">
+            <label htmlFor="yomi">読み仮名（任意）</label>
+            <input
+              id="yomi"
+              type="text"
+              name="yomi"
+              placeholder="例：やまだはなこ"
+              value={yomi}
+              onChange={(e) => setYomi(e.target.value)}
+            />
+          </div>
+          <div className="form-group">
             <label htmlFor="password">パスワード</label>
             <input
               id="password"
@@ -128,7 +140,7 @@ export default function RegisterPage() {
               required
             />
           </div>
-          <button className="btn-primary" type="submit" disabled={loading}>
+          <button className="btn btn-primary btn-full" type="submit" disabled={loading}>
             {loading ? '登録中...' : '登録する'}
           </button>
         </form>

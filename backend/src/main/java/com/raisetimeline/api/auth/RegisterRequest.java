@@ -28,6 +28,9 @@ public record RegisterRequest(
                 regexp = "^(?=.*[a-zA-Z])(?=.*[0-9]).+$",
                 message = "パスワードは英字と数字を両方含めてください"
         )
-        String password
+        String password,
+
+        @Size(max = 100, message = "読み仮名は100文字以内で入力してください")
+        String yomi
 ) {
 }

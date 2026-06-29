@@ -11,6 +11,7 @@ public class User {
     private String displayName;
     private String avatarUrl;
     private String bio;
+    private String yomi;
     private LocalDateTime createdAt;
 
     public Long getId() {
@@ -67,6 +68,14 @@ public class User {
 
     public void setBio(String bio) {
         this.bio = bio;
+    }
+
+    public String getYomi() {
+        return yomi;
+    }
+
+    public void setYomi(String yomi) {
+        this.yomi = yomi;
     }
 
     public LocalDateTime getCreatedAt() {

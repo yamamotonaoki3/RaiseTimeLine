@@ -1,5 +1,7 @@
 package com.raisetimeline.api.user;
 
+import com.raisetimeline.api.exception.BadRequestException;
+import com.raisetimeline.api.follow.FollowRepository;
 import com.raisetimeline.api.follow.FollowService;
 import com.raisetimeline.api.post.PostResponse;
 import com.raisetimeline.api.post.PostService;
@@ -23,12 +25,18 @@ import org.springframework.web.multipart.MultipartFile;
 public class UserController {
 
     private final UserService userService;
+    private final UserRepository userRepository;
     private final FollowService followService;
+    private final FollowRepository followRepository;
     private final PostService postService;
 
-    public UserController(UserService userService, FollowService followService, PostService postService) {
+    public UserController(UserService userService, UserRepository userRepository,
+                          FollowService followService, FollowRepository followRepository,
+                          PostService postService) {
         this.userService = userService;
+        this.userRepository = userRepository;
         this.followService = followService;
+        this.followRepository = followRepository;
         this.postService = postService;
     }
 
@@ -72,5 +80,25 @@ public class UserController {
     @GetMapping("/{id}/following")
     public List<UserSummaryResponse> getFollowing(@PathVariable Long id, Authentication auth) {
         return followService.getFollowing(id, auth.getName());
+    }
+
+    @GetMapping("/search")
+    public List<UserSummaryResponse> search(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            Authentication auth) {
+        if (q == null || q.isBlank()) {
+            throw new BadRequestException("検索キーワードを入力してください");
+        }
+        User me = userRepository.findByEmail(auth.getName()).orElseThrow();
+        return userRepository.search(q, me.getId(), page, size).stream()
+                .map(u -> new UserSummaryResponse(
+                        u.getId(),
+                        u.getDisplayName(),
+                        u.getAvatarUrl(),
+                        u.getBio(),
+                        followRepository.exists(me.getId(), u.getId())))
+                .toList();
     }
 }

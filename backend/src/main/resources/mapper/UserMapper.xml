@@ -20,9 +20,21 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO users (email, password_hash, username, display_name, bio, created_at)
-        VALUES (#{email}, #{passwordHash}, #{username}, #{displayName}, #{bio}, NOW())
+        INSERT INTO users (email, password_hash, username, display_name, bio, yomi, created_at)
+        VALUES (#{email}, #{passwordHash}, #{username}, #{displayName}, #{bio}, #{yomi}, NOW())
     </insert>
+
+    <select id="search" resultType="com.raisetimeline.api.user.User">
+        SELECT * FROM users
+        WHERE id != #{myId}
+          AND (
+            REPLACE(REPLACE(display_name, ' ', ''), '　', '') ILIKE CONCAT('%', #{keyword}, '%')
+            OR (yomi IS NOT NULL AND
+                REPLACE(REPLACE(yomi, ' ', ''), '　', '') ILIKE CONCAT('%', #{yomiKeyword}, '%'))
+          )
+        ORDER BY display_name
+        LIMIT #{size} OFFSET #{offset}
+    </select>
 
 
     <update id="update">

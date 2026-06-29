@@ -61,3 +61,10 @@ export async function getFollowing(userId: number): Promise<UserSummary[]> {
   const { data } = await api.get<UserSummary[]>(`/api/users/${userId}/following`)
   return data
 }
+
+export async function searchUsers(keyword: string, page = 0, size = 20): Promise<UserSummary[]> {
+  const { data } = await api.get<UserSummary[]>('/api/users/search', {
+    params: { q: keyword, page, size },
+  })
+  return data
+}

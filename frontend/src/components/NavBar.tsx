@@ -17,6 +17,9 @@ export default function NavBar() {
         <Link to="/" className="nav-logo">RaiseTimeLine</Link>
         <div className="nav-links">
           {user && (
+            <Link to="/search" className="nav-link">🔍 検索</Link>
+          )}
+          {user && (
             <div className="nav-user">
               <Link to={`/users/${user.userId}`} className="nav-avatar">
                 {user.avatarUrl ? (

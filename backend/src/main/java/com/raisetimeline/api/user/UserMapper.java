@@ -1,5 +1,6 @@
 package com.raisetimeline.api.user;
 
+import java.util.List;
 import java.util.Optional;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -19,4 +20,7 @@ public interface UserMapper {
 
     void update(@Param("id") Long id, @Param("displayName") String displayName,
                 @Param("bio") String bio, @Param("avatarUrl") String avatarUrl);
+
+    List<User> search(@Param("keyword") String keyword, @Param("yomiKeyword") String yomiKeyword,
+                      @Param("myId") Long myId, @Param("size") int size, @Param("offset") int offset);
 }
