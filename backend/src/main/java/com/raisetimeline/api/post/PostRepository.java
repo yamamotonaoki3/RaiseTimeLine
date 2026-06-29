@@ -37,8 +37,8 @@ public class PostRepository {
         postMapper.insert(post);
     }
 
-    public void update(Long id, String content) {
-        postMapper.update(id, content);
+    public void update(Long id, String content, String imageUrl) {
+        postMapper.update(id, content, imageUrl);
     }
 
     public void delete(Long id) {

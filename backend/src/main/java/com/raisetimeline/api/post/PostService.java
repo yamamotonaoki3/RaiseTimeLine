@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class PostService {
@@ -23,13 +24,16 @@ public class PostService {
     private final UserRepository userRepository;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
+    private final S3PostImageService s3PostImageService;
 
     public PostService(PostRepository postRepository, UserRepository userRepository,
-                       LikeRepository likeRepository, CommentRepository commentRepository) {
+                       LikeRepository likeRepository, CommentRepository commentRepository,
+                       S3PostImageService s3PostImageService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
+        this.s3PostImageService = s3PostImageService;
     }
 
     public List<PostResponse> getLatest(String email) {
@@ -74,24 +78,45 @@ public class PostService {
         return enrich(List.of(row), email).get(0);
     }
 
-    public PostResponse create(String email, String content) {
+    public PostResponse create(String email, String content, MultipartFile image) {
         User user = userRepository.findByEmail(email).orElseThrow();
         Post post = new Post();
         post.setUserId(user.getId());
         post.setContent(content);
+
+        String imageUrl = null;
+        if (image != null && !image.isEmpty()) {
+            imageUrl = s3PostImageService.store(image);
+        }
+        post.setImageUrl(imageUrl);
+
         postRepository.insert(post);
         PostRow row = postRepository.findById(post.getId()).orElseThrow();
         return enrich(List.of(row), email).get(0);
     }
 
-    public PostResponse update(Long id, String email, String content) {
+    public PostResponse update(Long id, String email, String content,
+                               MultipartFile image, boolean removeImage) {
         PostRow existing = postRepository.findById(id)
                 .orElseThrow(() -> new PostNotFoundException("投稿が見つかりません"));
         User user = userRepository.findByEmail(email).orElseThrow();
         if (!existing.userId().equals(user.getId())) {
             throw new ForbiddenException("この投稿を編集する権限がありません");
         }
-        postRepository.update(id, content);
+
+        String imageUrl = existing.imageUrl();
+
+        if (removeImage && imageUrl != null) {
+            s3PostImageService.delete(imageUrl);
+            imageUrl = null;
+        } else if (image != null && !image.isEmpty()) {
+            if (imageUrl != null) {
+                s3PostImageService.delete(imageUrl);
+            }
+            imageUrl = s3PostImageService.store(image);
+        }
+
+        postRepository.update(id, content, imageUrl);
         PostRow row = postRepository.findById(id).orElseThrow();
         return enrich(List.of(row), email).get(0);
     }
@@ -106,6 +131,9 @@ public class PostService {
         User user = userRepository.findByEmail(email).orElseThrow();
         if (!existing.userId().equals(user.getId())) {
             throw new ForbiddenException("この投稿を削除する権限がありません");
+        }
+        if (existing.imageUrl() != null) {
+            s3PostImageService.delete(existing.imageUrl());
         }
         postRepository.delete(id);
     }
@@ -136,6 +164,7 @@ public class PostService {
                 r.displayName(),
                 r.avatarUrl(),
                 r.content(),
+                r.imageUrl(),
                 r.createdAt(),
                 r.updatedAt(),
                 likeCounts.getOrDefault(r.id(), 0L),

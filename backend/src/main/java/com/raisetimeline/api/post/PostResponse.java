@@ -8,6 +8,7 @@ public record PostResponse(
         String displayName,
         String avatarUrl,
         String content,
+        String imageUrl,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         long likeCount,

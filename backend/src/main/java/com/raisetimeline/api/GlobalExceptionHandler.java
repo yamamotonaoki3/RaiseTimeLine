@@ -12,6 +12,7 @@ import com.raisetimeline.api.exception.NotFollowingException;
 import com.raisetimeline.api.exception.PostNotFoundException;
 import com.raisetimeline.api.exception.SelfFollowException;
 import com.raisetimeline.api.exception.UserNotFoundException;
+import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,6 +44,16 @@ public class GlobalExceptionHandler {
                                 .collect(Collectors.toList())
                 ));
         return Map.of("status", 400, "errors", errors);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map<String, Object> handleConstraintViolation(ConstraintViolationException ex) {
+        String message = ex.getConstraintViolations().stream()
+                .map(v -> v.getMessage())
+                .findFirst()
+                .orElse("入力値が不正です");
+        return Map.of("status", 400, "message", message);
     }
 
     @ExceptionHandler(DuplicateEmailException.class)

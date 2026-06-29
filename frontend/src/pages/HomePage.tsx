@@ -136,15 +136,17 @@ export default function HomePage() {
     return () => clearInterval(timer)
   }, [])
 
-  const handleCreate = async (content: string) => {
-    const created = await createPost(content)
-    topIdRef.current = created.id
-    setPosts((prev) => [created, ...prev])
-    setNewCount(0)
+  const handleCreate = async (content: string, image?: File) => {
+    const created = await createPost(content, image)
+    if (feedRef.current === 'all') {
+      topIdRef.current = created.id
+      setPosts((prev) => [created, ...prev])
+      setNewCount(0)
+    }
   }
 
-  const handleUpdate = async (id: number, content: string) => {
-    const updated = await updatePost(id, content)
+  const handleUpdate = async (id: number, content: string, image?: File, removeImage?: boolean) => {
+    const updated = await updatePost(id, content, image, removeImage)
     setPosts((prev) => prev.map((p) => (p.id === id ? updated : p)))
   }
 

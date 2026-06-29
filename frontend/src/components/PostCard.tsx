@@ -8,7 +8,7 @@ import LikeButton from './LikeButton'
 interface Props {
   post: Post
   currentUserId: number
-  onUpdate: (id: number, content: string) => Promise<void>
+  onUpdate: (id: number, content: string, image?: File, removeImage?: boolean) => Promise<void>
   onDelete: (id: number) => Promise<void>
 }
 
@@ -50,6 +50,15 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
               {isEdited && <span className="edited-badge">編集済み</span>}
             </div>
             <p className="post-text">{post.content}</p>
+            {post.imageUrl && (
+              <div className="post-image">
+                <img
+                  src={post.imageUrl}
+                  alt="投稿画像"
+                  className="post-image__img"
+                />
+              </div>
+            )}
             <div className="post-footer">
               <LikeButton
                 postId={post.id}
@@ -77,8 +86,8 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
       {showEdit && (
         <EditPostModal
           post={post}
-          onSave={async (content) => {
-            await onUpdate(post.id, content)
+          onSave={async (content, image, removeImage) => {
+            await onUpdate(post.id, content, image, removeImage)
             setShowEdit(false)
           }}
           onClose={() => setShowEdit(false)}

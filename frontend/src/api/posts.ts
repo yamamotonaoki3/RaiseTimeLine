@@ -6,6 +6,7 @@ export interface Post {
   displayName: string
   avatarUrl: string | null
   content: string
+  imageUrl: string | null
   createdAt: string
   updatedAt: string
   likeCount: number
@@ -37,13 +38,25 @@ export async function getNewerPosts(sinceId: number, feed: FeedType = 'all'): Pr
   return data
 }
 
-export async function createPost(content: string): Promise<Post> {
-  const { data } = await api.post<Post>('/api/posts', { content })
+export async function createPost(content: string, image?: File): Promise<Post> {
+  const form = new FormData()
+  form.append('content', content)
+  if (image) form.append('image', image)
+  const { data } = await api.post<Post>('/api/posts', form)
   return data
 }
 
-export async function updatePost(id: number, content: string): Promise<Post> {
-  const { data } = await api.patch<Post>(`/api/posts/${id}`, { content })
+export async function updatePost(
+  id: number,
+  content: string,
+  image?: File,
+  removeImage?: boolean,
+): Promise<Post> {
+  const form = new FormData()
+  form.append('content', content)
+  if (image) form.append('image', image)
+  if (removeImage) form.append('removeImage', 'true')
+  const { data } = await api.patch<Post>(`/api/posts/${id}`, form)
   return data
 }
 
