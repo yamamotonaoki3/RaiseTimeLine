@@ -39,6 +39,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testRuntimeOnly("com.h2database:h2")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4")
+    implementation("net.logstash.logback:logstash-logback-encoder:8.0")
 }
 
 checkstyle {
