@@ -16,6 +16,8 @@ import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.security.access.AccessDeniedException;
@@ -29,6 +31,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger LOG = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -156,6 +160,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Map<String, Object> handleUnexpected(Exception ex) {
+        LOG.error("unexpected_error", ex);
         return Map.of("status", 500, "message", "予期しないエラーが発生しました");
     }
 }
