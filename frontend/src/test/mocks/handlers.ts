@@ -15,5 +15,7 @@ const DUMMY_USERS = [
 export const handlers = [
   http.post('/api/auth/login', () => HttpResponse.json(DUMMY_AUTH)),
   http.post('/api/auth/register', () => HttpResponse.json(DUMMY_AUTH, { status: 201 })),
+  http.post('/api/auth/refresh', () => HttpResponse.json(DUMMY_AUTH)),
+  http.post('/api/auth/logout', () => HttpResponse.json({})),
   http.get('/api/users/search', () => HttpResponse.json(DUMMY_USERS)),
 ]
