@@ -43,3 +43,7 @@ logs/
 
 # AWS
 .aws/
+
+# k6 performance test reports
+backend/perf/results/*
+!backend/perf/results/.gitkeep
