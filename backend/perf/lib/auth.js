@@ -37,3 +37,26 @@ export function login(user) {
 export function authHeaders(token) {
     return { Authorization: `Bearer ${token}` };
 }
+
+// JWTアクセストークンの有効期限(application.yml: jwt.access-expiration、既定15分)に合わせて
+// 失効前に自動で再ログインする。soak/breakpointのような長時間実行のシナリオで、
+// 失効済みトークンを送り続けて401が積み重なる問題を防ぐため。
+const ACCESS_TOKEN_TTL_MS = 15 * 60 * 1000;
+const REFRESH_MARGIN_MS = 2 * 60 * 1000;
+
+let cachedToken = null;
+let tokenIssuedAt = 0;
+
+export function getValidToken(vuId) {
+    const now = Date.now();
+    if (cachedToken === null || now - tokenIssuedAt > ACCESS_TOKEN_TTL_MS - REFRESH_MARGIN_MS) {
+        const user = pickUser(vuId);
+        const token = login(user);
+        if (token === null) {
+            return null;
+        }
+        cachedToken = token;
+        tokenIssuedAt = now;
+    }
+    return cachedToken;
+}

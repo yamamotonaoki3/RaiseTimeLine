@@ -1,7 +1,7 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import exec from 'k6/execution';
-import { BASE_URL, pickUser, login, authHeaders } from '../lib/auth.js';
+import { BASE_URL, getValidToken, authHeaders } from '../lib/auth.js';
 import { buildOptions } from '../lib/scenarios-config.js';
 import { buildSummary } from '../lib/report.js';
 
@@ -14,20 +14,14 @@ export function handleSummary(data) {
     return buildSummary('timeline', data);
 }
 
-// モジュールスコープの変数はVUごとに1回だけ初期化され、以降のイテレーションで使い回される。
-let token = null;
-
 export default function () {
     // finally で必ず sleep(1) を実行する。エラー発生時に sleep を経由せず
     // 次のイテレーションへ即座に進むと、リトライ間隔ゼロの連打状態になり
     // サーバーへの負荷が指数的に悪化する（暴走ループ）ため。
     try {
+        const token = getValidToken(exec.vu.idInTest);
         if (token === null) {
-            const user = pickUser(exec.vu.idInTest);
-            token = login(user);
-            if (token === null) {
-                return;
-            }
+            return;
         }
         const headers = authHeaders(token);
 
