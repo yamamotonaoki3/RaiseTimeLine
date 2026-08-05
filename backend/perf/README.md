@@ -114,6 +114,28 @@ backend/perf/results/<シナリオ名>-<TEST_TYPE>-report.html
 
 このディレクトリは `.gitignore` で除外されており、レポートファイル自体はコミットされません。**テスト実行後にレポートファイルを自動削除することはしません**（後から見返せるようにローカルに残す運用）。テストデータ（DB）のクリーンアップとレポートファイルの扱いは別物である点に注意してください。
 
+### リアルタイムダッシュボード（実行中にグラフを見る）
+
+上記のHTMLレポートは**テスト終了後にしか見られない**。実行中にレスポンスタイムやVU数の推移をリアルタイムのグラフで見たい場合は、k6組み込みのWebダッシュボード機能を環境変数で有効にする。
+
+bash:
+
+```bash
+K6_WEB_DASHBOARD=true \
+K6_WEB_DASHBOARD_EXPORT=backend/perf/results/timeline-load-dashboard.html \
+k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.js
+```
+
+PowerShell:
+
+```powershell
+$env:K6_WEB_DASHBOARD = "true"
+$env:K6_WEB_DASHBOARD_EXPORT = "backend/perf/results/timeline-load-dashboard.html"
+k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.js
+```
+
+実行するとターミナルに `web dashboard: http://127.0.0.1:5665` と表示されるので、そのURLをブラウザで開くと実行中ずっとライブ更新されるグラフを見られる。`K6_WEB_DASHBOARD_EXPORT` を指定すると、終了時点のダッシュボードの内容が別のHTMLファイル（`<シナリオ名>-<TEST_TYPE>-dashboard.html`）としてエクスポートされる。k6-reporterによる `-report.html`（チェック結果・集計表が中心）と、ダッシュボードの `-dashboard.html`（時系列グラフが中心）は役割が異なるため、両方残しておくとよい。特に`soak`や`stress`のような長時間テストでは、リアルタイム監視が異常の早期発見に役立つ。
+
 ## テストデータのクリーンアップ
 
 テスト実行後は必ずクリーンアップを行い、DBにテストデータを残さないようにしてください。
@@ -139,7 +161,7 @@ psql -h localhost -U postgres -d raisetimeline -f backend/perf/seed/cleanup.sql
 
 ## ディレクトリ構成
 
-```
+```text
 backend/perf/
 ├── README.md
 ├── seed/
