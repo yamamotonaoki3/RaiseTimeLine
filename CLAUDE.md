@@ -121,3 +121,9 @@ cd backend
 cd frontend
 npm run dev
 ```
+
+---
+
+## 学び・手直しの記録
+
+Codexレビューで採用された指摘や実装中の手直しは `docs/lessons-learned.md` に記録する。新しいタスクに着手する前（上記フロー0.のドキュメント確認と合わせて）に索引を確認し、関連する教訓があれば計画に反映する。記録のタイミング・基準は `lessons-learned` Skill に従う。
