@@ -1,10 +1,10 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import exec from 'k6/execution';
-import { BASE_URL, getValidToken, authHeaders } from '../lib/auth.js';
-import { buildOptions } from '../lib/scenarios-config.js';
-import { buildSummary } from '../lib/report.js';
-import { multipartTextBody } from '../lib/multipart.js';
+import { BASE_URL, getValidToken, authHeaders } from '../lib/auth.ts';
+import { buildOptions } from '../lib/scenarios-config.ts';
+import { buildSummary } from '../lib/report.ts';
+import { multipartTextBody } from '../lib/multipart.ts';
 
 // シナリオ2: 投稿作成（POST /api/posts, multipart/form-data）
 // 生成される投稿はすべて content 先頭に [PERF_TEST] タグを付与する。
@@ -13,12 +13,12 @@ import { multipartTextBody } from '../lib/multipart.js';
 
 export const options = buildOptions('post-create');
 
-export function handleSummary(data) {
+export function handleSummary(data: object) {
     return buildSummary('post-create', data);
 }
 
-export default function () {
-    // finally で必ず sleep(1) を実行する（暴走ループ防止。timeline.js のコメント参照）。
+export default function (): void {
+    // finally で必ず sleep(1) を実行する（暴走ループ防止。timeline.ts のコメント参照）。
     try {
         const token = getValidToken(exec.vu.idInTest);
         if (token === null) {

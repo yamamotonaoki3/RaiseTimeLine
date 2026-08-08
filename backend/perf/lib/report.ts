@@ -6,7 +6,7 @@ import { textSummary } from 'https://jslib.k6.io/k6-summary/0.1.0/index.js';
 // あわせてターミナルにも通常通りのサマリーを表示する。
 // 出力パスはリポジトリルートから k6 run を実行する運用（README参照）を前提に、
 // カレントディレクトリからの相対パスで指定する。
-export function buildSummary(scenarioName, data) {
+export function buildSummary(scenarioName: string, data: object): Record<string, string> {
     const testType = __ENV.TEST_TYPE || 'load';
     const reportPath = `backend/perf/results/${scenarioName}-${testType}-report.html`;
 

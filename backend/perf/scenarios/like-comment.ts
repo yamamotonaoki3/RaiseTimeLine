@@ -1,23 +1,27 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import exec from 'k6/execution';
-import { BASE_URL, getValidToken, authHeaders } from '../lib/auth.js';
-import { buildOptions } from '../lib/scenarios-config.js';
-import { buildSummary } from '../lib/report.js';
+import { BASE_URL, getValidToken, authHeaders } from '../lib/auth.ts';
+import { buildOptions } from '../lib/scenarios-config.ts';
+import { buildSummary } from '../lib/report.ts';
 
 // シナリオ3: いいね・コメント投稿（書き込み系の同時実行）
 // 対象の投稿はタイムラインから取得したものを使う（シードデータの投稿がヒットする）。
 // 生成されるコメントは content 先頭に [PERF_TEST] タグを付与し、cleanup.sql で削除する。
 // いいねはシードユーザー（perfuser_%）が行うため、cleanup.sql の user_id 条件で削除される。
 
+interface PostSummary {
+    id: number;
+}
+
 export const options = buildOptions('like-comment');
 
-export function handleSummary(data) {
+export function handleSummary(data: object) {
     return buildSummary('like-comment', data);
 }
 
-export default function () {
-    // finally で必ず sleep(1) を実行する（暴走ループ防止。timeline.js のコメント参照）。
+export default function (): void {
+    // finally で必ず sleep(1) を実行する（暴走ループ防止。timeline.ts のコメント参照）。
     try {
         const token = getValidToken(exec.vu.idInTest);
         if (token === null) {
@@ -31,7 +35,7 @@ export default function () {
             return;
         }
 
-        const posts = timeline.json();
+        const posts = timeline.json() as PostSummary[];
         if (!Array.isArray(posts) || posts.length === 0) {
             return;
         }

@@ -62,15 +62,15 @@ psql -h localhost -U raisetimeline -d raisetimeline -f backend/perf/seed/seed-pe
 
 ```bash
 # タイムライン取得シナリオ（ログイン→タイムライン→新着ポーリング）
-k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.js
-k6 run --env TEST_TYPE=stress backend/perf/scenarios/timeline.js
-k6 run --env TEST_TYPE=spike backend/perf/scenarios/timeline.js
+k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.ts
+k6 run --env TEST_TYPE=stress backend/perf/scenarios/timeline.ts
+k6 run --env TEST_TYPE=spike backend/perf/scenarios/timeline.ts
 
 # 投稿作成シナリオ
-k6 run --env TEST_TYPE=load backend/perf/scenarios/post-create.js
+k6 run --env TEST_TYPE=load backend/perf/scenarios/post-create.ts
 
 # いいね・コメントシナリオ
-k6 run --env TEST_TYPE=load backend/perf/scenarios/like-comment.js
+k6 run --env TEST_TYPE=load backend/perf/scenarios/like-comment.ts
 ```
 
 > **注意**: HTMLレポートの出力先パスがカレントディレクトリからの相対パスになっているため、必ず**リポジトリルートから**上記コマンドを実行してください。
@@ -78,7 +78,7 @@ k6 run --env TEST_TYPE=load backend/perf/scenarios/like-comment.js
 `BASE_URL` 環境変数でテスト対象のURLを変更できます（デフォルト: `http://localhost:8080`）。
 
 ```bash
-k6 run --env TEST_TYPE=load --env BASE_URL=http://localhost:8080 backend/perf/scenarios/timeline.js
+k6 run --env TEST_TYPE=load --env BASE_URL=http://localhost:8080 backend/perf/scenarios/timeline.ts
 ```
 
 ## 結果の見方
@@ -92,7 +92,7 @@ k6実行後のサマリーに `thresholds` の結果が表示されます。
 
 ### JWTアクセストークンの自動更新について
 
-`soak`テスト（1時間）のような長時間実行では、`backend/src/main/resources/application.yml` の `jwt.access-expiration`（既定15分）でトークンが失効する。`lib/auth.js` の `getValidToken()` は失効の2分前に自動で再ログインし、失効済みトークンを送り続けてエラーが積み重なる問題を防いでいる。
+`soak`テスト（1時間）のような長時間実行では、`backend/src/main/resources/application.yml` の `jwt.access-expiration`（既定15分）でトークンが失効する。`lib/auth.ts` の `getValidToken()` は失効の2分前に自動で再ログインし、失効済みトークンを送り続けてエラーが積み重なる問題を防いでいる。
 
 この仕組みが無い状態で最初にsoakテストを実行した際、timeline/like-commentでエラー率50%、post-createで75%という結果になった。原因調査の結果、TCPやネットワークの問題ではなく、単純にVUごとにキャッシュしたトークンを一度も更新していなかったことが原因と判明した（15分間は正常、以降45分は401が返り続ける計算と実測値がほぼ完全に一致）。`getValidToken()` 導入後は同条件で18分実行してもエラー率0%になることを確認済み。
 
@@ -123,7 +123,7 @@ bash:
 ```bash
 K6_WEB_DASHBOARD=true \
 K6_WEB_DASHBOARD_EXPORT=backend/perf/results/timeline-load-dashboard.html \
-k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.js
+k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.ts
 ```
 
 PowerShell:
@@ -131,7 +131,7 @@ PowerShell:
 ```powershell
 $env:K6_WEB_DASHBOARD = "true"
 $env:K6_WEB_DASHBOARD_EXPORT = "backend/perf/results/timeline-load-dashboard.html"
-k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.js
+k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.ts
 ```
 
 実行するとターミナルに `web dashboard: http://127.0.0.1:5665` と表示されるので、そのURLをブラウザで開くと実行中ずっとライブ更新されるグラフを見られる。`K6_WEB_DASHBOARD_EXPORT` を指定すると、終了時点のダッシュボードの内容が別のHTMLファイル（`<シナリオ名>-<TEST_TYPE>-dashboard.html`）としてエクスポートされる。k6-reporterによる `-report.html`（チェック結果・集計表が中心）と、ダッシュボードの `-dashboard.html`（時系列グラフが中心）は役割が異なるため、両方残しておくとよい。特に`soak`や`stress`のような長時間テストでは、リアルタイム監視が異常の早期発見に役立つ。
@@ -144,7 +144,7 @@ k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.js
 psql -h localhost -U raisetimeline -d raisetimeline -f backend/perf/seed/cleanup.sql
 ```
 
-`seed-perf-data.sql` で投入したデータに加え、`post-create.js` / `like-comment.js` シナリオがAPI経由で新規作成したデータ（投稿・コメント）も、すべて `perfuser_%` ユーザー起因、または `[PERF_TEST]` タグ付きのため、同じ `cleanup.sql` でまとめて削除されます。実行後の出力で `remaining_users` / `remaining_posts` / `remaining_comments` がすべて `0` になっていることを確認してください。
+`seed-perf-data.sql` で投入したデータに加え、`post-create.ts` / `like-comment.ts` シナリオがAPI経由で新規作成したデータ（投稿・コメント）も、すべて `perfuser_%` ユーザー起因、または `[PERF_TEST]` タグ付きのため、同じ `cleanup.sql` でまとめて削除されます。実行後の出力で `remaining_users` / `remaining_posts` / `remaining_comments` がすべて `0` になっていることを確認してください。
 
 ## 一連の流れ（まとめ）
 
@@ -153,7 +153,7 @@ psql -h localhost -U raisetimeline -d raisetimeline -f backend/perf/seed/cleanup
 psql -h localhost -U raisetimeline -d raisetimeline -f backend/perf/seed/seed-perf-data.sql
 
 # 2. テスト実行（例: 負荷テスト）
-k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.js
+k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.ts
 
 # 3. クリーンアップ
 psql -h localhost -U raisetimeline -d raisetimeline -f backend/perf/seed/cleanup.sql
@@ -169,12 +169,12 @@ backend/perf/
 │   ├── users.csv            # ログイン用認証情報一覧
 │   └── cleanup.sql          # テストデータ削除
 ├── lib/
-│   ├── auth.js              # ログイン共通処理
-│   ├── scenarios-config.js  # smoke/load/stress/spike/soak/breakpoint の設定
-│   └── report.js            # HTMLレポート出力（handleSummary）
+│   ├── auth.ts              # ログイン共通処理
+│   ├── scenarios-config.ts  # smoke/load/stress/spike/soak/breakpoint の設定
+│   └── report.ts            # HTMLレポート出力（handleSummary）
 ├── scenarios/
-│   ├── timeline.js          # タイムライン取得シナリオ
-│   ├── post-create.js       # 投稿作成シナリオ
-│   └── like-comment.js      # いいね・コメントシナリオ
+│   ├── timeline.ts          # タイムライン取得シナリオ
+│   ├── post-create.ts       # 投稿作成シナリオ
+│   └── like-comment.ts      # いいね・コメントシナリオ
 └── results/                 # HTMLレポート出力先（.gitignore対象）
 ```
