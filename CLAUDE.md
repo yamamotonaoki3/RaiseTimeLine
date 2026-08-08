@@ -98,6 +98,8 @@ Controller → Service → Repository
 
 | 役割 | 技術 |
 | --- | --- |
+| E2Eテスト | Playwright 1.62.1（`frontend/e2e/`） |
+| パフォーマンステスト | k6（`backend/perf/`） |
 | フロントエンド | React 19.2.6 + TypeScript 6.0.2 |
 | ビルドツール | Vite 8.0.12 |
 | ルーティング | React Router 7.15.1 |
@@ -121,6 +123,19 @@ cd backend
 cd frontend
 npm run dev
 ```
+
+## テスト実行
+
+```bash
+cd backend && .\gradlew.bat test    # バックエンド単体・結合（JUnit 5）
+cd frontend && npm test             # フロントエンド単体（Vitest）
+cd frontend && npm run e2e          # E2E（Playwright）※DB・バックエンドを先に起動しておく
+```
+
+E2Eとパフォーマンステストは手動実行の運用。詳細は各READMEを参照する。
+
+- E2E: [frontend/e2e/README.md](frontend/e2e/README.md)
+- 性能: [backend/perf/README.md](backend/perf/README.md)
 
 ---
 

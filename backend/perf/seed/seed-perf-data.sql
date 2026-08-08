@@ -1,6 +1,6 @@
 -- パフォーマンステスト用シードデータ投入スクリプト
 -- 手動実行専用（Flywayマイグレーションには含めない）
--- 実行例: psql -h localhost -U postgres -d raisetimeline -f backend/perf/seed/seed-perf-data.sql
+-- 実行例: psql -h localhost -U raisetimeline -d raisetimeline -f backend/perf/seed/seed-perf-data.sql
 --
 -- 生成されるデータはすべて識別可能な形式にしている（cleanup.sql で確実に削除するため）
 --   - users.username     : perfuser_001 〜 perfuser_100

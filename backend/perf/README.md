@@ -28,7 +28,7 @@ cd backend
 大量データ（実運用に近いデータ量）を用意し、JOINやページネーションを含むクエリの性能を計測できるようにします。
 
 ```bash
-psql -h localhost -U postgres -d raisetimeline -f backend/perf/seed/seed-perf-data.sql
+psql -h localhost -U raisetimeline -d raisetimeline -f backend/perf/seed/seed-perf-data.sql
 ```
 
 投入されるデータ:
@@ -141,7 +141,7 @@ k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.js
 テスト実行後は必ずクリーンアップを行い、DBにテストデータを残さないようにしてください。
 
 ```bash
-psql -h localhost -U postgres -d raisetimeline -f backend/perf/seed/cleanup.sql
+psql -h localhost -U raisetimeline -d raisetimeline -f backend/perf/seed/cleanup.sql
 ```
 
 `seed-perf-data.sql` で投入したデータに加え、`post-create.js` / `like-comment.js` シナリオがAPI経由で新規作成したデータ（投稿・コメント）も、すべて `perfuser_%` ユーザー起因、または `[PERF_TEST]` タグ付きのため、同じ `cleanup.sql` でまとめて削除されます。実行後の出力で `remaining_users` / `remaining_posts` / `remaining_comments` がすべて `0` になっていることを確認してください。
@@ -150,13 +150,13 @@ psql -h localhost -U postgres -d raisetimeline -f backend/perf/seed/cleanup.sql
 
 ```bash
 # 1. シード投入
-psql -h localhost -U postgres -d raisetimeline -f backend/perf/seed/seed-perf-data.sql
+psql -h localhost -U raisetimeline -d raisetimeline -f backend/perf/seed/seed-perf-data.sql
 
 # 2. テスト実行（例: 負荷テスト）
 k6 run --env TEST_TYPE=load backend/perf/scenarios/timeline.js
 
 # 3. クリーンアップ
-psql -h localhost -U postgres -d raisetimeline -f backend/perf/seed/cleanup.sql
+psql -h localhost -U raisetimeline -d raisetimeline -f backend/perf/seed/cleanup.sql
 ```
 
 ## ディレクトリ構成

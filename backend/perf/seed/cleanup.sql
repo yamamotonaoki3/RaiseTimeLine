@@ -9,7 +9,7 @@
 -- 外部キー制約の都合上、子テーブルから順に削除する
 -- （likes, comments -> posts, follows -> users）
 --
--- 実行例: psql -h localhost -U postgres -d raisetimeline -f backend/perf/seed/cleanup.sql
+-- 実行例: psql -h localhost -U raisetimeline -d raisetimeline -f backend/perf/seed/cleanup.sql
 
 BEGIN;
 

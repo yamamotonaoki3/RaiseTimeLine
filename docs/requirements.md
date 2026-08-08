@@ -131,8 +131,31 @@ RaiseTech カリキュラムの受講生・個人が利用する学習用 SNS �
 
 | 項目 | 要件 |
 | --- | --- |
-| コード品質 | Checkstyle（バックエンド）・ESLint（フロントエンド）によるチェック |
+| コード品質 | Checkstyle（バックエンド）・oxlint（フロントエンド）によるチェック |
 | マイグレーション | Flyway による DB マイグレーション管理 |
+| テスト | 下記 6.6 のテスト戦略に従い、単体・結合・E2E・性能の4層で品質を担保する |
+
+### 6.6 テスト戦略
+
+各層の役割は次のとおり。**同じ不具合を複数の層で重複して検出するのではなく、
+その層でしか見つけられないものを担当させる**方針とする。
+
+| 層 | ツール | 検証範囲 | 外部依存の扱い | 実行方法 |
+| --- | --- | --- | --- | --- |
+| 単体・結合（バックエンド） | JUnit 5 | Controller / Service / Repository の各責務と3層の疎通 | DBは H2 | `gradlew test` |
+| 単体（フロントエンド） | Vitest + React Testing Library | 画面・コンポーネントのロジック | APIは MSW でモック | `npm test` |
+| E2E | Playwright | 実ブラウザでの画面操作から DB 反映まで | **モックなし**（実バックエンド・実PostgreSQL） | `npm run e2e`（手動） |
+| 性能 | k6 | 負荷時のレスポンスタイム・エラー率 | ブラウザを介さず API に直接負荷 | `k6 run`（手動） |
+
+- フロントエンドの単体テストは MSW で API を偽装しているため、**フロントが期待する
+  レスポンスとバックエンドが実際に返すレスポンスのズレは検出できない**。
+  この結合部分を担保するのが E2E テストの役割である。
+- E2E と性能テストは CI に組み込まず、必要なタイミングで手動実行する。
+- 対応ブラウザ（6.5 移植性要件）の Chrome / Firefox / Edge は、Playwright の
+  ブラウザ指定（`--project`）で検証する。
+- テストデータには実データ・実在の個人名・実在しうるメールアドレスを使わない。
+  詳細は CLAUDE.md「テストデータの取り扱い」および
+  [frontend/e2e/README.md](../frontend/e2e/README.md) / [backend/perf/README.md](../backend/perf/README.md) を参照。
 
 ### 6.5 移植性要件
 
@@ -190,7 +213,7 @@ RaiseTech カリキュラムの受講生・個人が利用する学習用 SNS �
 | フロントエンド | Vite | 8.0.12 |
 | フロントエンド | React Router | 7.15.1 |
 | フロントエンド | Axios | 1.16.1 |
-| フロントエンド | ESLint | 10.3.0 |
+| フロントエンド | oxlint | 1.69.0 |
 | バックエンド | Java | 25 |
 | バックエンド | Spring Boot | 4.0.3 |
 | バックエンド | Gradle | 9.5.0 |
@@ -199,8 +222,10 @@ RaiseTech カリキュラムの受講生・個人が利用する学習用 SNS �
 | DB | PostgreSQL | 17 |
 | 画像ストレージ | AWS S3 | — |
 | インフラ | AWS（EC2 + RDS + ALB） | — |
-| テスト | JUnit | 5 |
-| テスト | Vitest / React Testing Library | — |
+| テスト（単体・結合） | JUnit | 5 |
+| テスト（単体） | Vitest / React Testing Library | 4.1.9 |
+| テスト（E2E） | Playwright | 1.62.1 |
+| テスト（性能） | k6 | — |
 | ツール | Docker / docker-compose | — |
 | ツール | Flyway | — |
 

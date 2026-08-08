@@ -7,6 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "test": "vitest run",
+    "e2e": "playwright test --project=chromium",
+    "e2e:ui": "playwright test --project=chromium --ui",
+    "e2e:all-browsers": "playwright test",
+    "e2e:report": "playwright show-report",
     "lint": "oxlint",
     "preview": "vite preview"
   },
@@ -17,6 +21,7 @@
     "react-router-dom": "^7.15.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

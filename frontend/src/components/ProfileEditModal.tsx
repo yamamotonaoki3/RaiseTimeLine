@@ -80,8 +80,9 @@ export default function ProfileEditModal({ profile, onSave, onClose }: Props) {
             />
           </div>
 
-          <label className="form-label">表示名</label>
+          <label className="form-label" htmlFor="profile-display-name">表示名</label>
           <input
+            id="profile-display-name"
             className="form-input"
             type="text"
             maxLength={MAX_NAME}
@@ -90,8 +91,9 @@ export default function ProfileEditModal({ profile, onSave, onClose }: Props) {
           />
           <p className="char-count">{displayName.length}/{MAX_NAME}</p>
 
-          <label className="form-label">自己紹介</label>
+          <label className="form-label" htmlFor="profile-bio">自己紹介</label>
           <textarea
+            id="profile-bio"
             className="post-textarea"
             rows={3}
             maxLength={MAX_BIO}

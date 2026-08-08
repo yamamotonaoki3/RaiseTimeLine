@@ -40,7 +40,7 @@ export default function CommentSection({ postId, currentUserId, onCommentAdded }
     <div className="comment-section">
       <ul className="comment-list">
         {comments.map((c) => (
-          <li key={c.id} className="comment-item">
+          <li key={c.id} className="comment-item" data-testid="comment-item">
             <span className="comment-author">{c.displayName}</span>
             <span className="comment-content">{c.content}</span>
             {c.userId === currentUserId && (
