@@ -2,9 +2,36 @@
 // 環境変数 TEST_TYPE で切り替えるための設定。
 // 使い方: k6 run --env TEST_TYPE=smoke|load|stress|spike|soak|breakpoint <scenario file>
 
-export function buildOptions(scenarioName) {
+interface Stage {
+    duration: string;
+    target: number;
+}
+
+interface ConstantVusScenario {
+    executor: 'constant-vus';
+    vus: number;
+    duration: string;
+}
+
+interface RampingVusScenario {
+    executor: 'ramping-vus';
+    startVUs: number;
+    stages: Stage[];
+}
+
+type Scenario = ConstantVusScenario | RampingVusScenario;
+
+interface PerfOptions {
+    scenarios: Record<string, Scenario>;
+    thresholds: {
+        http_req_duration: string[];
+        http_req_failed: string[];
+    };
+}
+
+export function buildOptions(scenarioName: string): PerfOptions {
     const testType = __ENV.TEST_TYPE || 'load';
-    const scenarios = {};
+    const scenarios: Record<string, Scenario> = {};
 
     if (testType === 'smoke') {
         // スモークテスト: 本格的なテストの前に「そもそも動くか」を最小構成で確認する予備チェック

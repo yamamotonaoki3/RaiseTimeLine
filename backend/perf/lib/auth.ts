@@ -3,17 +3,22 @@ import { check } from 'k6';
 import { SharedArray } from 'k6/data';
 import papaparse from 'https://jslib.k6.io/papaparse/5.1.1/index.js';
 
-export const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
+export const BASE_URL: string = __ENV.BASE_URL || 'http://localhost:8080';
+
+export interface TestUser {
+    email: string;
+    password: string;
+}
 
 // backend/perf/seed/users.csv からシード投入済みのテストユーザーを読み込む。
 // SharedArray で読み込むことで全VU間でメモリを共有し、VUごとに異なるユーザーを使わせて
 // 特定ユーザーへの負荷集中を避ける。
-const users = new SharedArray('perf test users', function () {
+const users = new SharedArray<TestUser>('perf test users', function () {
     const csv = open('../seed/users.csv');
-    return papaparse.parse(csv, { header: true, skipEmptyLines: true }).data;
+    return papaparse.parse(csv, { header: true, skipEmptyLines: true }).data as TestUser[];
 });
 
-export function pickUser(vuId) {
+export function pickUser(vuId: number): TestUser {
     return users[vuId % users.length];
 }
 
@@ -21,7 +26,7 @@ export function pickUser(vuId) {
 // 呼び出し側は null を「今回のイテレーションはスキップ」の合図として扱うこと。
 // （高負荷時に例外を投げると sleep() を経由せず次のイテレーションへ即座に進んでしまい、
 //   リトライの間隔がないまま連打状態になってサーバーへの実質的な高負荷を悪化させるため）
-export function login(user) {
+export function login(user: TestUser): string | null {
     const res = http.post(
         `${BASE_URL}/api/auth/login`,
         JSON.stringify({ email: user.email, password: user.password }),
@@ -31,10 +36,10 @@ export function login(user) {
     if (!ok) {
         return null;
     }
-    return res.json('accessToken');
+    return res.json('accessToken') as string;
 }
 
-export function authHeaders(token) {
+export function authHeaders(token: string): { Authorization: string } {
     return { Authorization: `Bearer ${token}` };
 }
 
@@ -44,10 +49,10 @@ export function authHeaders(token) {
 const ACCESS_TOKEN_TTL_MS = 15 * 60 * 1000;
 const REFRESH_MARGIN_MS = 2 * 60 * 1000;
 
-let cachedToken = null;
+let cachedToken: string | null = null;
 let tokenIssuedAt = 0;
 
-export function getValidToken(vuId) {
+export function getValidToken(vuId: number): string | null {
     const now = Date.now();
     if (cachedToken === null || now - tokenIssuedAt > ACCESS_TOKEN_TTL_MS - REFRESH_MARGIN_MS) {
         const user = pickUser(vuId);

@@ -3,7 +3,12 @@
 // RaiseTimeLine の投稿系APIは consumes = multipart/form-data のため、
 // ファイルを含まないテキストのみのリクエストでも multipart で送る必要があり、
 // boundary を含めて手動でエンコードする。
-export function multipartTextBody(fields) {
+export interface MultipartResult {
+    body: string;
+    contentTypeHeader: string;
+}
+
+export function multipartTextBody(fields: Record<string, string>): MultipartResult {
     const boundary = '----k6FormBoundary' + Math.random().toString(16).slice(2);
     let body = '';
     for (const [key, value] of Object.entries(fields)) {

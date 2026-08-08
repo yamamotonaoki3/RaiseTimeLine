@@ -1,20 +1,24 @@
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import exec from 'k6/execution';
-import { BASE_URL, getValidToken, authHeaders } from '../lib/auth.js';
-import { buildOptions } from '../lib/scenarios-config.js';
-import { buildSummary } from '../lib/report.js';
+import { BASE_URL, getValidToken, authHeaders } from '../lib/auth.ts';
+import { buildOptions } from '../lib/scenarios-config.ts';
+import { buildSummary } from '../lib/report.ts';
 
 // シナリオ1: ログイン → タイムライン取得（カーソルページネーション）→ 新着件数ポーリング
 // 最も典型的なユーザー行動を再現する。RaiseTimeLineで最も負荷がかかりやすい GET /api/posts が対象。
 
+interface PostSummary {
+    id: number;
+}
+
 export const options = buildOptions('timeline');
 
-export function handleSummary(data) {
+export function handleSummary(data: object) {
     return buildSummary('timeline', data);
 }
 
-export default function () {
+export default function (): void {
     // finally で必ず sleep(1) を実行する。エラー発生時に sleep を経由せず
     // 次のイテレーションへ即座に進むと、リトライ間隔ゼロの連打状態になり
     // サーバーへの負荷が指数的に悪化する（暴走ループ）ため。
@@ -32,7 +36,7 @@ export default function () {
             return;
         }
 
-        const posts = firstPage.json();
+        const posts = firstPage.json() as PostSummary[];
         const oldestId = Array.isArray(posts) && posts.length > 0 ? posts[posts.length - 1].id : null;
         const newestId = Array.isArray(posts) && posts.length > 0 ? posts[0].id : null;
 
