@@ -34,7 +34,7 @@ export default function PostCard({ post, currentUserId, onUpdate, onDelete }: Pr
 
   return (
     <>
-      <div className="post-card">
+      <div className="post-card" data-testid="post-card">
         <div className="post-card-inner">
           <Link to={`/users/${post.userId}`} className="post-avatar">
             {post.avatarUrl ? (

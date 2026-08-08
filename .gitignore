@@ -47,3 +47,14 @@ logs/
 # k6 performance test reports
 backend/perf/results/*
 !backend/perf/results/.gitkeep
+
+# アップロードされた画像の保存先（E2Eテストのアバター画像もここに入る）
+backend/uploads/
+backend/bin/
+
+# Playwright（E2Eテスト）
+frontend/playwright-report/
+frontend/test-results/
+frontend/blob-report/
+# ログイン状態・シード結果（認証情報を含むためコミットしない）
+frontend/e2e/.auth/
