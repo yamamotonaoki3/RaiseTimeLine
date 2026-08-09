@@ -60,7 +60,7 @@ class PostServiceTest {
         other.setEmail("other@example.com");
         other.setDisplayName("他人");
 
-        postWithImage = new PostRow(100L, 1L, "オーナー", null, "内容", "https://s3/image.jpg",
+        postWithImage = new PostRow(100L, 1L, "オーナー", null, "内容", "posts/image.jpg",
                 LocalDateTime.now(), LocalDateTime.now());
         postWithoutImage = new PostRow(101L, 1L, "オーナー", null, "内容", null,
                 LocalDateTime.now(), LocalDateTime.now());
@@ -82,7 +82,7 @@ class PostServiceTest {
 
         postService.delete(100L, owner.getEmail());
 
-        verify(s3PostImageService).delete(postWithImage.imageUrl());
+        verify(s3PostImageService).delete(postWithImage.imageKey());
         verify(postRepository).delete(100L);
     }
 
@@ -134,7 +134,7 @@ class PostServiceTest {
 
         postService.update(100L, owner.getEmail(), "更新内容", null, false);
 
-        verify(postRepository).update(100L, "更新内容", postWithImage.imageUrl());
+        verify(postRepository).update(100L, "更新内容", postWithImage.imageKey());
     }
 
     // --- enrich() のデータマッピング確認 ---

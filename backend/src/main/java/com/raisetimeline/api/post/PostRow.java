@@ -8,7 +8,7 @@ public record PostRow(
         String displayName,
         String avatarUrl,
         String content,
-        String imageUrl,
+        String imageKey,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

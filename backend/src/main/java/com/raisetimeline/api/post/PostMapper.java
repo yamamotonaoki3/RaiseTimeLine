@@ -20,7 +20,7 @@ public interface PostMapper {
 
     void insert(Post post);
 
-    void update(@Param("id") Long id, @Param("content") String content, @Param("imageUrl") String imageUrl);
+    void update(@Param("id") Long id, @Param("content") String content, @Param("imageKey") String imageKey);
 
     void delete(@Param("id") Long id);
 

@@ -4,10 +4,47 @@ Codexレビューで採用された指摘や、実装中の手直しのうち、
 
 ## 索引
 
+- 2026-08-09: Mapperのパラメータ名変更を、XMLだけ直してJava側を忘れて500になった件
+- 2026-08-09: 投稿画像の配信をpresigned URL方式にし、ローカル検証にMinIOを採用した件
 - 2026-07-27: k6パフォーマンステストで「原因不明のエラー急増」に見えた不具合が、実はJWTアクセストークンの失効未対応だった件
 - 2026-08-06: Playwright の storageState をファイルに保存して使い回せなかった件（リフレッシュトークンのローテーション）
 
 ## 記録
+
+### 2026-08-09: Mapperのパラメータ名変更を、XMLだけ直してJava側を忘れて500になった件
+
+- **種別**: 手直し（実装中に発生。動作確認で発覚）
+- **対象領域・関連ファイル**: backend/src/main/java/com/raisetimeline/api/post/PostMapper.java, PostRepository.java, backend/src/main/resources/mapper/PostMapper.xml, backend/src/test/java/com/raisetimeline/api/post/PostRepositoryTest.java
+- **何が起きたか**: 投稿画像をpresigned URL方式に変える作業で `imageUrl` → `imageKey` にリネームした際、**XMLの `#{imageKey}` は直したが `PostMapper.java` の `@Param("imageUrl")` を直し忘れた**。投稿の作成・取得・削除は正常に動くのに、**更新（PATCH）だけが500**になった。
+
+  ```text
+  BindingException: Parameter 'imageKey' not found.
+  Available parameters are [imageUrl, id, param3, param1, content, param2]
+  ```
+
+  **単体テスト・結合テストは全てgreenのまま**だった。`PostServiceTest` は Repository をモックしており、`PostRepositoryTest` には image 関連の検証が1件も無かったため、誰も気づけなかった。実際にAPIを叩く動作確認で初めて発覚した。
+- **対応**: `@Param` 名とメソッド引数名を修正。あわせて `PostRepositoryTest` に image_key の insert / update / null クリアの3件を追加した。**修正を意図的に戻すと追加したテストが2件failすることを確認**してから確定させた。
+- **次回の行動規則**:
+  1. **MyBatisのパラメータ名を変えるときは「XML・Mapperインターフェースの`@Param`・呼び出し側の引数名」を必ず3点セットで確認する。** コンパイルは通り、型も合うため、静的解析では検出できない。
+  2. **Serviceの単体テストがRepositoryをモックしているなら、SQLの不整合は原理的に検出できない。** カラムやパラメータ名を変更したら、実DBを使うRepository層のテストを必ず1件は追加・実行する。今回は「取得系は動くのに更新系だけ壊れる」という部分的な壊れ方だったため、疎通確認だけでは見逃す可能性が高かった。
+  3. 回帰テストを書いたら、**修正を一時的に戻してテストが確かに落ちることを確認する**。落ちないテストは回帰を防げない。
+- **状態**: 有効
+- **根拠**: Issue #63 / PR（本PR）
+
+### 2026-08-09: 投稿画像の配信をpresigned URL方式にし、ローカル検証にMinIOを採用した件
+
+- **種別**: 設計判断（学習 #58 / #59 の結論を反映）
+- **対象領域・関連ファイル**: backend/src/main/java/com/raisetimeline/api/config/S3Config.java, post/S3PostImageService.java, backend/docker-compose.yml
+- **何が起きたか**: E2Eテスト導入（#56）時に、投稿への画像添付だけテストできず対象外にした。保存先がS3で、ローカルでは実AWS認証情報が必要だったため。
+- **対応と判断理由**:
+  - **ローカル検証はMinIOを使う**。必要なのがS3 APIだけであり、LocalStackの対応範囲は現要件に対して余剰。MinIOの方が軽く、開発中に何度も起動するものなので差が積み上がる。
+  - **配信はpresigned URL方式にする**。従来の「公開URLをDBに保存する」方式は、MinIOで再現するにはバケットを公開する必要があり、**同じ設定を実AWSに適用するとバケットが公開状態（一覧列挙も可能）になる**。「ローカルだけ公開・本番は非公開」に分けると、E2Eが本番と違う経路を検証することになるため採らなかった。
+  - DBには **object key** を保存し、`PostService.enrich()`（`PostRow` → `PostResponse` の唯一の変換点）で期限付きURLを発行する。`PostResponse.imageUrl` の名前は変えていないため、**フロントエンドの変更は不要**だった。
+- **次回の行動規則**:
+  1. **オブジェクトストレージのURLをコード内で文字列組み立てし、削除時にURLからkeyを逆算する実装にしない。** ストレージを差し替えた瞬間に壊れ、しかも**削除が例外も出さず黙って失敗する**という気づきにくい形で壊れる。最初からkeyを保存する。
+  2. **テスト環境と本番で「経路」を変えない。** 認証情報やエンドポイントを変えるのはよいが、公開/非公開のような**アクセス方式そのものを変えるとE2Eの意味が失われる**。
+- **状態**: 有効
+- **根拠**: Issue #58 / #59（学習）→ #63（実装）
 
 ### 2026-08-06: Playwright の storageState をファイルに保存して使い回せなかった件（リフレッシュトークンのローテーション）
 
