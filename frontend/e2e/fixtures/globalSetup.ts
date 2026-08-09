@@ -2,7 +2,13 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import type { FullConfig } from '@playwright/test'
 import { request } from '@playwright/test'
-import { assertDbRunning, assertLocalTarget, runSqlFile } from './db'
+import {
+  assertDbRunning,
+  assertLocalTarget,
+  assertMinioRunning,
+  deleteMinioObjectsForE2E,
+  runSqlFile,
+} from './db'
 import {
   E2E_TAG,
   SEED_STATE_PATH,
@@ -31,8 +37,11 @@ async function globalSetup(config: FullConfig) {
 
   assertLocalTarget(baseURL)
   assertDbRunning()
+  assertMinioRunning()
 
   console.log('[e2e] 前回のテストデータを削除します')
+  // DBの行を消す前に、対応する画像をMinIOから削除する（順序が逆だとkeyを辿れない）
+  deleteMinioObjectsForE2E()
   runSqlFile('e2e-cleanup.sql')
 
   const api = await request.newContext({ baseURL })

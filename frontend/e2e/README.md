@@ -31,11 +31,11 @@ Edge で実行する場合は、OSにインストール済みの Microsoft Edge 
 
 ### 2. アプリケーションの起動
 
-**DBとバックエンドは事前に起動しておく必要があります。** Vite（フロントエンド）は Playwright が
+**DB・MinIO・バックエンドは事前に起動しておく必要があります。** Vite（フロントエンド）は Playwright が
 自動起動するため、手動起動は不要です（起動済みなら再利用します）。
 
 ```powershell
-# 1. DB
+# 1. DB と MinIO（投稿画像の保存先。docker compose で同時に起動する）
 docker compose -f backend/docker-compose.yml up -d
 
 # 2. バックエンド（別ターミナル）
@@ -67,6 +67,7 @@ npx playwright test --debug                    # ステップ実行
 | --- | --- | --- |
 | `tests/auth.spec.ts` | F01 認証 | 未認証時のリダイレクト / ログイン / ログイン失敗 / 新規登録と自動ログイン / パスワード不一致でAPIを呼ばない / ログアウト |
 | `tests/post.spec.ts` | F02 投稿 | 作成してタイムライン先頭に出る / 編集して「編集済み」バッジ / 削除して再読込後も消えている |
+| `tests/post.spec.ts`（投稿画像） | F02 投稿 | 画像を添付して**実際に表示される** / リロード後も表示される / 差し替え / 削除 / **署名なしURLでは取得できない** |
 | `tests/timeline.spec.ts` | F03 タイムライン | フォロー中フィードの絞り込み / 全体フィード / 新しい順 / スクロールによる追加読み込み |
 | `tests/like.spec.ts` | F04 いいね | いいね→カウント+1・リロード後も維持 / 取り消し→カウント復帰 / 画面を跨いだ状態の一致 |
 | `tests/comment.spec.ts` | F05 コメント | 投稿して一覧に追加・入力欄クリア / 削除 / コメント数の反映 |
@@ -109,6 +110,13 @@ npx playwright test --debug                    # ステップ実行
 `globalTeardown.ts` がテスト終了後に `fixtures/e2e-cleanup.sql` を実行します。
 シードしたデータに加え、テスト中にUI経由で作られた投稿・コメント・いいね・フォローも、
 すべて `e2euser_%` ユーザー起因か `[E2E_TEST]` タグ付きのため、まとめて削除されます。
+
+**MinIO上の投稿画像も削除します。** SQLはDBの行を消すだけなので、それだけでは
+オブジェクトが孤児として残り続けます。`deleteMinioObjectsForE2E()` が、
+**DBの行を消す前に**対象投稿の `image_key` を取得し、そのオブジェクトだけを削除します
+（順序が逆だとkeyを辿れなくなります）。
+
+バケットを丸ごと空にはしません。手動確認で作った画像を巻き添えで消さないためです。
 
 同じスクリプトは **`globalSetup` でも投入前に実行**しています。前回が異常終了して
 データが残っていても、そのまま再実行できるようにするためです（冪等性）。
@@ -155,13 +163,25 @@ import { testAsUserB } from '../fixtures/auth'    // ユーザーBでログイ�
 未認証から始めたい `auth.spec.ts` だけが
 `test.use({ storageState: NO_STORAGE_STATE })` で上書きしています。
 
+### 画像の検証は `toBeVisible()` を使わない
+
+投稿画像は presigned URL で配信されます。**`toBeVisible()` は `<img>` 要素があるかしか見ないため、
+URLが無効で画像を取得できなくてもパスしてしまいます。** 署名・有効期限・エンドポイントの
+いずれかを誤ると読み込みに失敗するので、それを検出できないアサーションでは検証になりません。
+
+`fixtures/image.ts` の `expectImageLoaded()` を使い、**`naturalWidth > 0`**（＝実際にデコードできた）
+で判定してください。
+
+```ts
+await expectImageLoaded(home.postImage(content))   // ○
+await expect(home.postImage(content)).toBeVisible() // ✕ URLが壊れていても通る
+```
+
+なお `naturalWidth` は「取得できたか」ではなく「**画像として解釈できたか**」を見ます。
+HTTP 200 で本文が返っていても、壊れた画像なら 0 のままです。
+
 ### 対象外にしていること
 
-- **投稿への画像添付** … 投稿画像の保存先は S3（`S3PostImageService`）で、実行には
-  実際のAWS認証情報が必要です。外部サービスに実通信するテストは規約・課金の事前確認が
-  要るため扱いません（CLAUDE.md「外部APIを利用するテストの取り扱い」）。
-  ファイルアップロード自体は、**ローカルディスクに保存されるアバター画像**
-  （`AvatarStorageService`）を `profile.spec.ts` で検証しています。
 - **CI（GitHub Actions）への組み込み** … CI自体が未整備のため別Issue
 - **異常系・権限エラーの網羅**（他人の投稿を編集できない等）
 - **ビジュアルリグレッションテスト**
@@ -193,6 +213,8 @@ npx playwright show-trace test-results/<...>/trace.zip   # 操作を時系列で
 | 症状 | 原因と対処 |
 | --- | --- |
 | `DBコンテナ（raisetimeline-db）に接続できません` | DBが起動していない。`docker compose -f backend/docker-compose.yml up -d` |
+| `MinIOコンテナ（raisetimeline-minio）...に接続できません` | MinIOが起動していない。同じ `docker compose up -d` で起動する |
+| `画像が読み込まれませんでした` | 画像は取得できても**デコードに失敗**している可能性がある。まず `fixtures/avatar.png` が正しいPNGか確認する（壊れた画像はChromeでは表示され、Firefoxでは失敗する） |
 | `テストユーザー ... の作成に失敗しました` | バックエンドが起動していない、または起動途中。`.\gradlew.bat bootRun` の完了を待つ |
 | `E2Eテストの接続先が localhost ではありません` | `E2E_BASE_URL` がローカル以外を指している。**意図した設定でないか必ず確認する** |
 | ログイン状態のテストが軒並み落ちる | `e2e/.auth/` が古い可能性。ディレクトリを削除して再実行する |
@@ -204,8 +226,9 @@ frontend/e2e/
 ├── README.md
 ├── fixtures/
 │   ├── auth.ts              # テストごとにAPIログインする test（ログイン済みの起点）
+│   ├── image.ts             # 画像が実際に読み込まれたかの検証（naturalWidth）
 │   ├── testData.ts          # 架空データの定義（ユーザー・タグ・件数）
-│   ├── db.ts                # localhostガード / psql実行
+│   ├── db.ts                # localhostガード / psql実行 / MinIOのオブジェクト削除
 │   ├── globalSetup.ts       # 残骸削除 → API経由でシード
 │   ├── globalTeardown.ts    # クリーンアップ
 │   ├── e2e-cleanup.sql      # 識別子ベースの一括削除
