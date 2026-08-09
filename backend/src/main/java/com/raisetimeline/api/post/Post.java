@@ -7,7 +7,7 @@ public class Post {
     private Long id;
     private Long userId;
     private String content;
-    private String imageUrl;
+    private String imageKey;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -35,12 +35,12 @@ public class Post {
         this.content = content;
     }
 
-    public String getImageUrl() {
-        return imageUrl;
+    public String getImageKey() {
+        return imageKey;
     }
 
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+    public void setImageKey(String imageKey) {
+        this.imageKey = imageKey;
     }
 
     public LocalDateTime getCreatedAt() {

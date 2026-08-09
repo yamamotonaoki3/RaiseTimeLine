@@ -152,6 +152,55 @@ class PostRepositoryTest {
         assertThat(result).noneMatch(r -> r.id().equals(otherPost.getId()));
     }
 
+    // --- image_key の永続化 ---
+    //
+    // Service層のテストはRepositoryをモックするため、Mapperのパラメータ名の不一致を検出できない。
+    // 実際にDBまで通すこの層でしか捕捉できないため、insert / update の両方を検証する。
+
+    @Test
+    @DisplayName("insert(): image_key が保存され、取得できる")
+    void insert_persistsImageKey() {
+        Post post = new Post();
+        post.setUserId(userA.getId());
+        post.setContent("画像付き投稿");
+        post.setImageKey("posts/abc.png");
+        postRepository.insert(post);
+
+        PostRow row = postRepository.findById(post.getId()).orElseThrow();
+        assertThat(row.imageKey()).isEqualTo("posts/abc.png");
+    }
+
+    @Test
+    @DisplayName("update(): image_key を差し替えられる")
+    void update_replacesImageKey() {
+        Post post = new Post();
+        post.setUserId(userA.getId());
+        post.setContent("差し替え前");
+        post.setImageKey("posts/old.png");
+        postRepository.insert(post);
+
+        postRepository.update(post.getId(), "差し替え後", "posts/new.png");
+
+        PostRow row = postRepository.findById(post.getId()).orElseThrow();
+        assertThat(row.content()).isEqualTo("差し替え後");
+        assertThat(row.imageKey()).isEqualTo("posts/new.png");
+    }
+
+    @Test
+    @DisplayName("update(): image_key に null を渡すと画像なしになる")
+    void update_clearsImageKey() {
+        Post post = new Post();
+        post.setUserId(userA.getId());
+        post.setContent("画像あり");
+        post.setImageKey("posts/old.png");
+        postRepository.insert(post);
+
+        postRepository.update(post.getId(), "画像なし", null);
+
+        PostRow row = postRepository.findById(post.getId()).orElseThrow();
+        assertThat(row.imageKey()).isNull();
+    }
+
     private User createUser(String email, String username, String displayName) {
         User user = new User();
         user.setEmail(email);

@@ -84,11 +84,11 @@ public class PostService {
         post.setUserId(user.getId());
         post.setContent(content);
 
-        String imageUrl = null;
+        String imageKey = null;
         if (image != null && !image.isEmpty()) {
-            imageUrl = s3PostImageService.store(image);
+            imageKey = s3PostImageService.store(image);
         }
-        post.setImageUrl(imageUrl);
+        post.setImageKey(imageKey);
 
         postRepository.insert(post);
         PostRow row = postRepository.findById(post.getId()).orElseThrow();
@@ -104,19 +104,19 @@ public class PostService {
             throw new ForbiddenException("この投稿を編集する権限がありません");
         }
 
-        String imageUrl = existing.imageUrl();
+        String imageKey = existing.imageKey();
 
-        if (removeImage && imageUrl != null) {
-            s3PostImageService.delete(imageUrl);
-            imageUrl = null;
+        if (removeImage && imageKey != null) {
+            s3PostImageService.delete(imageKey);
+            imageKey = null;
         } else if (image != null && !image.isEmpty()) {
-            if (imageUrl != null) {
-                s3PostImageService.delete(imageUrl);
+            if (imageKey != null) {
+                s3PostImageService.delete(imageKey);
             }
-            imageUrl = s3PostImageService.store(image);
+            imageKey = s3PostImageService.store(image);
         }
 
-        postRepository.update(id, content, imageUrl);
+        postRepository.update(id, content, imageKey);
         PostRow row = postRepository.findById(id).orElseThrow();
         return enrich(List.of(row), email).get(0);
     }
@@ -132,8 +132,8 @@ public class PostService {
         if (!existing.userId().equals(user.getId())) {
             throw new ForbiddenException("この投稿を削除する権限がありません");
         }
-        if (existing.imageUrl() != null) {
-            s3PostImageService.delete(existing.imageUrl());
+        if (existing.imageKey() != null) {
+            s3PostImageService.delete(existing.imageKey());
         }
         postRepository.delete(id);
     }
@@ -164,7 +164,8 @@ public class PostService {
                 r.displayName(),
                 r.avatarUrl(),
                 r.content(),
-                r.imageUrl(),
+                // DBにはobject keyが入っている。表示のたびに期限付きURLを発行する
+                s3PostImageService.presignedUrl(r.imageKey()),
                 r.createdAt(),
                 r.updatedAt(),
                 likeCounts.getOrDefault(r.id(), 0L),

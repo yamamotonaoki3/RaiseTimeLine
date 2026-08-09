@@ -112,7 +112,9 @@ Controller → Service → Repository
 ## アプリ起動手順
 
 ```bash
-# 1. データベース起動
+# 1. データベース + MinIO（S3互換ストレージ）起動
+#    backend/ ディレクトリで実行する。Composeプロジェクト名は raisetimeline
+cd backend
 docker compose up -d
 
 # 2. バックエンド起動（backend/ ディレクトリで）
@@ -123,6 +125,16 @@ cd backend
 cd frontend
 npm run dev
 ```
+
+起動するコンテナは2つ。
+
+| コンテナ | 用途 | ポート |
+| --- | --- | --- |
+| `raisetimeline-db` | PostgreSQL | 5432 |
+| `raisetimeline-minio` | S3互換ストレージ（投稿画像の保存先） | 9000（API）/ 9001（コンソール） |
+
+投稿画像は本番ではAWS S3、ローカルではMinIOに保存する。**接続先が違うだけで、アプリのコードパスは同一**。
+MinIOのコンソールは `http://localhost:9001`（ユーザー・パスワードとも `raisetimeline`）。
 
 ## テスト実行
 

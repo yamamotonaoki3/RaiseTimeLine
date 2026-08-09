@@ -35,7 +35,8 @@ X（旧 Twitter）に類似した学習目的の SNS Web アプリケーショ�
 ## 開発環境の起動
 
 ```bash
-# 1. データベースを起動（Docker）
+# 1. データベースと MinIO（S3互換ストレージ）を起動（Docker）
+cd backend
 docker compose up -d
 
 # 2. バックエンドを起動
@@ -107,7 +108,7 @@ RaiseTimeLine/
 │       ├── error-messages.md
 │       ├── revision-history.md
 │       └── features/             # 機能定義書（F01〜F08）
-├── docker-compose.yml            # 開発用 PostgreSQL コンテナ
+├── backend/docker-compose.yml    # 開発用 PostgreSQL + MinIO コンテナ
 └── README.md
 ```
 
