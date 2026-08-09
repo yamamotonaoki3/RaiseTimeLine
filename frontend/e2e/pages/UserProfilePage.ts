@@ -10,8 +10,15 @@ export class UserProfilePage {
   readonly followerLink: Locator
   readonly followingLink: Locator
   readonly postCards: Locator
+  /**
+   * プロフィール本体のアバター。
+   * 編集モーダルにも `.profile-avatar` を持つプレビューがあるため、
+   * `.profile-card` の内側に限定しないと2要素に一致してしまう。
+   */
+  readonly avatar: Locator
 
   constructor(private readonly page: Page) {
+    this.avatar = page.locator('.profile-card .profile-avatar img')
     this.displayName = page.locator('.profile-name')
     this.bio = page.locator('.profile-bio')
     this.followButton = page.getByRole('button', { name: 'フォロー', exact: true })
@@ -40,6 +47,8 @@ export class UserProfilePage {
       await modal.locator('input[type="file"]').setInputFiles(input.avatarPath)
     }
     await modal.getByRole('button', { name: '保存する' }).click()
+    // モーダルが閉じきる前に画面を検証すると、モーダル内のプレビューと二重に一致する
+    await modal.waitFor({ state: 'detached' })
   }
 
   /** フォロワー数・フォロー中数の表示値 */

@@ -4,6 +4,7 @@ import com.raisetimeline.api.exception.AlreadyFollowingException;
 import com.raisetimeline.api.exception.NotFollowingException;
 import com.raisetimeline.api.exception.SelfFollowException;
 import com.raisetimeline.api.exception.UserNotFoundException;
+import com.raisetimeline.api.user.S3AvatarService;
 import com.raisetimeline.api.user.User;
 import com.raisetimeline.api.user.UserRepository;
 import com.raisetimeline.api.user.UserSummaryResponse;
@@ -15,10 +16,13 @@ public class FollowService {
 
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
+    private final S3AvatarService s3AvatarService;
 
-    public FollowService(FollowRepository followRepository, UserRepository userRepository) {
+    public FollowService(FollowRepository followRepository, UserRepository userRepository,
+                         S3AvatarService s3AvatarService) {
         this.followRepository = followRepository;
         this.userRepository = userRepository;
+        this.s3AvatarService = s3AvatarService;
     }
 
     public void follow(Long targetUserId, String requestEmail) {
@@ -64,6 +68,7 @@ public class FollowService {
 
     private UserSummaryResponse toSummary(User u, Long myId) {
         boolean followedByMe = !u.getId().equals(myId) && followRepository.exists(myId, u.getId());
-        return new UserSummaryResponse(u.getId(), u.getDisplayName(), u.getAvatarUrl(), u.getBio(), followedByMe);
+        return new UserSummaryResponse(u.getId(), u.getDisplayName(),
+                s3AvatarService.presignedUrl(u.getAvatarKey()), u.getBio(), followedByMe);
     }
 }

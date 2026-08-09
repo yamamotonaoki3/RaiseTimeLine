@@ -5,6 +5,7 @@ import com.raisetimeline.api.exception.ForbiddenException;
 import com.raisetimeline.api.exception.PostNotFoundException;
 import com.raisetimeline.api.like.LikeRepository;
 import com.raisetimeline.api.like.PostCount;
+import com.raisetimeline.api.user.S3AvatarService;
 import com.raisetimeline.api.user.User;
 import com.raisetimeline.api.user.UserRepository;
 import java.util.Collections;
@@ -25,15 +26,18 @@ public class PostService {
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
     private final S3PostImageService s3PostImageService;
+    private final S3AvatarService s3AvatarService;
 
     public PostService(PostRepository postRepository, UserRepository userRepository,
                        LikeRepository likeRepository, CommentRepository commentRepository,
-                       S3PostImageService s3PostImageService) {
+                       S3PostImageService s3PostImageService,
+                       S3AvatarService s3AvatarService) {
         this.postRepository = postRepository;
         this.userRepository = userRepository;
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
         this.s3PostImageService = s3PostImageService;
+        this.s3AvatarService = s3AvatarService;
     }
 
     public List<PostResponse> getLatest(String email) {
@@ -162,7 +166,7 @@ public class PostService {
                 r.id(),
                 r.userId(),
                 r.displayName(),
-                r.avatarUrl(),
+                s3AvatarService.presignedUrl(r.avatarKey()),
                 r.content(),
                 // DBにはobject keyが入っている。表示のたびに期限付きURLを発行する
                 s3PostImageService.presignedUrl(r.imageKey()),

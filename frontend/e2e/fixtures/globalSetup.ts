@@ -1,5 +1,6 @@
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import type { FullConfig } from '@playwright/test'
 import { request } from '@playwright/test'
 import {
@@ -74,6 +75,11 @@ async function globalSetup(config: FullConfig) {
   // B の投稿。いいね・コメントの対象。
   const userBPostId = await createPost(api, tokens[USER_B.username], USER_B_POST_CONTENT)
 
+  // C にアバターを設定する。
+  // フォロー中一覧・検索結果（UserSummaryResponse）でアバターのpresigned URLが
+  // 正しく発行されているかを検証するため、「自分以外のユーザーがアバターを持つ」状態が要る。
+  await setAvatar(api, tokens[USER_C.username], userIds[USER_C.username])
+
   await api.dispose()
 
   const state: SeedState = { userIds, userBPostId }
@@ -112,6 +118,30 @@ async function register(
   }
   const body = await res.json()
   return { id: body.userId, accessToken: body.accessToken }
+}
+
+/** プロフィール更新APIでアバターを設定する。 */
+async function setAvatar(
+  api: Awaited<ReturnType<typeof request.newContext>>,
+  token: string,
+  userId: number,
+): Promise<void> {
+  const avatarPath = path.join(path.dirname(fileURLToPath(import.meta.url)), 'avatar.png')
+  const res = await api.put(`/api/users/${userId}`, {
+    headers: authHeader(token),
+    multipart: {
+      displayName: USER_C.displayName,
+      bio: `${E2E_TAG} 一覧表示の検証用`,
+      avatar: {
+        name: 'avatar.png',
+        mimeType: 'image/png',
+        buffer: readFileSync(avatarPath),
+      },
+    },
+  })
+  if (!res.ok()) {
+    throw new Error(`アバターの設定に失敗しました（${res.status()}）: ${await res.text()}`)
+  }
 }
 
 async function createPost(

@@ -23,11 +23,18 @@ test.describe('タイムライン', () => {
   })
 
   test('「全体」にはフォローしていないユーザーの投稿も表示される', async () => {
-    await home.allTab.click()
+    await home.showAllFeed()
     await expect(home.postCards.first()).toBeVisible()
 
+    // B はフォローしていないユーザー。1ページは20件なので、他のテストが作った投稿が
+    // 積み上がるとBの投稿が1ページ目から押し出される。見つかるまで追加読み込みする。
     const bPost = home.postCards.filter({ hasText: USER_B.displayName })
-    await expect(bPost.first()).toBeVisible()
+    await expect(async () => {
+      if (await bPost.count() === 0) {
+        await home.scrollToBottom()
+      }
+      expect(await bPost.count()).toBeGreaterThan(0)
+    }).toPass({ timeout: 15_000 })
   })
 
   test('投稿は新しい順に並ぶ', async () => {

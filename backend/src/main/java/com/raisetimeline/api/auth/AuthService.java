@@ -5,6 +5,7 @@ import com.raisetimeline.api.exception.DuplicateDisplayNameException;
 import com.raisetimeline.api.exception.DuplicateEmailException;
 import com.raisetimeline.api.exception.DuplicateUsernameException;
 import com.raisetimeline.api.security.JwtUtil;
+import com.raisetimeline.api.user.S3AvatarService;
 import com.raisetimeline.api.user.User;
 import com.raisetimeline.api.user.UserRepository;
 import java.util.Optional;
@@ -21,18 +22,21 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+    private final S3AvatarService s3AvatarService;
 
     public AuthService(
             AuthenticationManager authenticationManager,
             JwtUtil jwtUtil,
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
-            RefreshTokenService refreshTokenService) {
+            RefreshTokenService refreshTokenService,
+            S3AvatarService s3AvatarService) {
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenService = refreshTokenService;
+        this.s3AvatarService = s3AvatarService;
     }
 
     public TokenPair register(RegisterRequest request) {
@@ -57,7 +61,8 @@ public class AuthService {
         String accessToken = jwtUtil.generateAccessToken(user.getEmail());
         String refreshToken = refreshTokenService.create(user.getId());
         AuthResponse response = new AuthResponse(
-                accessToken, user.getId(), user.getDisplayName(), user.getEmail(), user.getAvatarUrl());
+                accessToken, user.getId(), user.getDisplayName(), user.getEmail(),
+                s3AvatarService.presignedUrl(user.getAvatarKey()));
         return new TokenPair(response, refreshToken);
     }
 
@@ -69,7 +74,8 @@ public class AuthService {
         String accessToken = jwtUtil.generateAccessToken(user.getEmail());
         String refreshToken = refreshTokenService.create(user.getId());
         AuthResponse response = new AuthResponse(
-                accessToken, user.getId(), user.getDisplayName(), user.getEmail(), user.getAvatarUrl());
+                accessToken, user.getId(), user.getDisplayName(), user.getEmail(),
+                s3AvatarService.presignedUrl(user.getAvatarKey()));
         return new TokenPair(response, refreshToken);
     }
 
@@ -79,7 +85,8 @@ public class AuthService {
         String newRefreshToken = refreshTokenService.create(user.getId());
         String newAccessToken = jwtUtil.generateAccessToken(user.getEmail());
         RefreshResponse response = new RefreshResponse(
-                newAccessToken, user.getId(), user.getDisplayName(), user.getEmail(), user.getAvatarUrl());
+                newAccessToken, user.getId(), user.getDisplayName(), user.getEmail(),
+                s3AvatarService.presignedUrl(user.getAvatarKey()));
         return new RefreshResult(response, newRefreshToken);
     }
 
@@ -92,6 +99,6 @@ public class AuthService {
     public Optional<MeResponse> getCurrentUser(String email) {
         return userRepository.findByEmail(email)
                 .map(u -> new MeResponse(u.getId(), u.getDisplayName(), u.getEmail(),
-                        u.getAvatarUrl(), u.getBio()));
+                        s3AvatarService.presignedUrl(u.getAvatarKey()), u.getBio()));
     }
 }

@@ -34,7 +34,7 @@ class UserControllerTest {
     private S3PostImageService s3PostImageService;
 
     @MockitoBean
-    private AvatarStorageService avatarStorageService;
+    private S3AvatarService s3AvatarService;
 
     private MockMvc mockMvc;
     private String accessToken;

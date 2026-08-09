@@ -11,6 +11,7 @@ import com.raisetimeline.api.exception.AlreadyFollowingException;
 import com.raisetimeline.api.exception.NotFollowingException;
 import com.raisetimeline.api.exception.SelfFollowException;
 import com.raisetimeline.api.exception.UserNotFoundException;
+import com.raisetimeline.api.user.S3AvatarService;
 import com.raisetimeline.api.user.User;
 import com.raisetimeline.api.user.UserRepository;
 import com.raisetimeline.api.user.UserSummaryResponse;
@@ -31,6 +32,8 @@ class FollowServiceTest {
     private FollowRepository followRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private S3AvatarService s3AvatarService;
 
     @InjectMocks
     private FollowService followService;

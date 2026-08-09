@@ -33,8 +33,18 @@ public class UserRepository {
         userMapper.insert(user);
     }
 
-    public void update(Long id, String displayName, String bio, String avatarUrl) {
-        userMapper.update(id, displayName, bio, avatarUrl);
+    public void update(Long id, String displayName, String bio, String avatarKey) {
+        userMapper.update(id, displayName, bio, avatarKey);
+    }
+
+    /** アバター移行用。移行完了後に AvatarMigrationRunner ごと削除する。 */
+    public List<User> findByAvatarKeyPrefix(String prefix) {
+        return userMapper.findByAvatarKeyPrefix(prefix);
+    }
+
+    /** アバター移行用。update() と違い null でクリアできる。 */
+    public void updateAvatarKey(Long id, String avatarKey) {
+        userMapper.updateAvatarKey(id, avatarKey);
     }
 
     public List<User> search(String keyword, Long myId, int page, int size) {

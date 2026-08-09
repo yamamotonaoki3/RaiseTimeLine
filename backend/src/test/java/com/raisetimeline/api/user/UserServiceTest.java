@@ -33,7 +33,7 @@ class UserServiceTest {
     @Mock
     private PostRepository postRepository;
     @Mock
-    private AvatarStorageService avatarStorageService;
+    private S3AvatarService s3AvatarService;
 
     @InjectMocks
     private UserService userService;
@@ -85,7 +85,7 @@ class UserServiceTest {
     // --- updateProfile() の avatar 分岐 ---
 
     @Test
-    @DisplayName("updateProfile: avatar が null の場合 AvatarStorageService は呼ばれない")
+    @DisplayName("updateProfile: avatar が null の場合 S3AvatarService は呼ばれない")
     void updateProfile_nullAvatar_doesNotCallStorage() {
         when(userRepository.findByEmail(me.getEmail())).thenReturn(Optional.of(me));
         when(userRepository.findById(me.getId())).thenReturn(Optional.of(me));
@@ -95,15 +95,15 @@ class UserServiceTest {
 
         userService.updateProfile(me.getId(), me.getEmail(), "表示名", null, null);
 
-        verify(avatarStorageService, never()).store(any(), any());
+        verify(s3AvatarService, never()).store(any(), any());
     }
 
     @Test
-    @DisplayName("updateProfile: avatar がある場合 AvatarStorageService が呼ばれる")
+    @DisplayName("updateProfile: avatar がある場合 S3AvatarService が呼ばれる")
     void updateProfile_withAvatar_callsStorage() {
         MultipartFile avatar = mock(MultipartFile.class);
         when(avatar.isEmpty()).thenReturn(false);
-        when(avatarStorageService.store(any(), any())).thenReturn("https://s3/avatar.jpg");
+        when(s3AvatarService.store(any(), any())).thenReturn("avatars/new.png");
         when(userRepository.findByEmail(me.getEmail())).thenReturn(Optional.of(me));
         when(userRepository.findById(me.getId())).thenReturn(Optional.of(me));
         when(followRepository.countFollowers(anyLong())).thenReturn(0L);
@@ -112,7 +112,7 @@ class UserServiceTest {
 
         userService.updateProfile(me.getId(), me.getEmail(), "表示名", null, avatar);
 
-        verify(avatarStorageService).store(avatar, me.getAvatarUrl());
+        verify(s3AvatarService).store(avatar, me.getAvatarKey());
     }
 
     // --- getProfile() の followedByMe 分岐 ---

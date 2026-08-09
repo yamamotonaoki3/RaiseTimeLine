@@ -143,6 +143,61 @@ class UserRepositoryTest {
         assertThat(result.get().getYomi()).hasSize(100);
     }
 
+    // --- avatar_key の永続化 ---
+    //
+    // Service層のテストはRepositoryをモックするため、Mapperのパラメータ名の不一致を検出できない。
+    // 実際にDBまで通すこの層でしか捕捉できない（#63 で同じ問題を踏んでいる）。
+
+    @Test
+    @DisplayName("update(): avatar_key が保存され、取得できる")
+    void update_persistsAvatarKey() {
+        User user = createUser("avatar1@example.com", "avatar_user1", "アバター1", null);
+
+        userRepository.update(user.getId(), "アバター1", "自己紹介", "avatars/abc.png");
+
+        User result = userRepository.findById(user.getId()).orElseThrow();
+        assertThat(result.getAvatarKey()).isEqualTo("avatars/abc.png");
+    }
+
+    @Test
+    @DisplayName("update(): avatar_key に null を渡すと既存の値を保持する（画像なしでの更新）")
+    void update_keepsAvatarKeyWhenNull() {
+        User user = createUser("avatar2@example.com", "avatar_user2", "アバター2", null);
+        userRepository.update(user.getId(), "アバター2", "旧", "avatars/keep.png");
+
+        userRepository.update(user.getId(), "アバター2", "新", null);
+
+        User result = userRepository.findById(user.getId()).orElseThrow();
+        assertThat(result.getBio()).isEqualTo("新");
+        assertThat(result.getAvatarKey()).isEqualTo("avatars/keep.png");
+    }
+
+    @Test
+    @DisplayName("updateAvatarKey(): null を渡すとアバターを外せる（移行処理が使う）")
+    void updateAvatarKey_canClearWithNull() {
+        User user = createUser("avatar3@example.com", "avatar_user3", "アバター3", null);
+        userRepository.update(user.getId(), "アバター3", null, "avatars/old.png");
+
+        userRepository.updateAvatarKey(user.getId(), null);
+
+        User result = userRepository.findById(user.getId()).orElseThrow();
+        assertThat(result.getAvatarKey()).isNull();
+    }
+
+    @Test
+    @DisplayName("findByAvatarKeyPrefix(): 接頭辞が一致する行だけを返す（移行処理が使う）")
+    void findByAvatarKeyPrefix_returnsMatchingRows() {
+        User legacy = createUser("avatar4@example.com", "avatar_user4", "アバター4", null);
+        User migrated = createUser("avatar5@example.com", "avatar_user5", "アバター5", null);
+        userRepository.update(legacy.getId(), "アバター4", null, "/avatars/legacy.png");
+        userRepository.update(migrated.getId(), "アバター5", null, "avatars/migrated.png");
+
+        List<User> result = userRepository.findByAvatarKeyPrefix("/avatars/");
+
+        assertThat(result).extracting(User::getId).contains(legacy.getId());
+        assertThat(result).extracting(User::getId).doesNotContain(migrated.getId());
+    }
+
     private User createUser(String email, String username, String displayName, String yomi) {
         User user = new User();
         user.setEmail(email);

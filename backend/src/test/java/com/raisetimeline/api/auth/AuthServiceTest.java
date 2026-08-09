@@ -12,6 +12,7 @@ import com.raisetimeline.api.exception.DuplicateDisplayNameException;
 import com.raisetimeline.api.exception.DuplicateEmailException;
 import com.raisetimeline.api.exception.DuplicateUsernameException;
 import com.raisetimeline.api.security.JwtUtil;
+import com.raisetimeline.api.user.S3AvatarService;
 import com.raisetimeline.api.user.User;
 import com.raisetimeline.api.user.UserRepository;
 import java.util.Optional;
@@ -38,6 +39,8 @@ class AuthServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private RefreshTokenService refreshTokenService;
+    @Mock
+    private S3AvatarService s3AvatarService;
 
     @InjectMocks
     private AuthService authService;
