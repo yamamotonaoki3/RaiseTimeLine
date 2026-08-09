@@ -43,12 +43,30 @@ export class HomePage {
     await modal.getByRole('button', { name: '投稿する' }).click()
   }
 
-  /** 投稿カードの「編集」から本文を書き換える */
-  async editPost(currentContent: string, newContent: string) {
+  /**
+   * 投稿カードの「編集」から本文を書き換える。
+   * imagePath を渡すと画像を差し替え、removeImage を立てると画像を外す。
+   */
+  async editPost(
+    currentContent: string,
+    newContent: string,
+    options?: { imagePath?: string; removeImage?: boolean },
+  ) {
     await this.postByContent(currentContent).getByRole('button', { name: '✏️ 編集' }).click()
     const modal = this.page.locator('.modal-card')
     await modal.locator('.post-textarea').fill(newContent)
+    if (options?.removeImage) {
+      await modal.getByRole('button', { name: '画像を削除' }).click()
+    }
+    if (options?.imagePath) {
+      await modal.locator('input[type="file"]').setInputFiles(options.imagePath)
+    }
     await modal.getByRole('button', { name: '保存する' }).click()
+  }
+
+  /** 投稿カード内の画像 */
+  postImage(content: string): Locator {
+    return this.postByContent(content).locator('.post-image__img')
   }
 
   /** 投稿カードの「削除」から確認モーダルを経て削除する */
