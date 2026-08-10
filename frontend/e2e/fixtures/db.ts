@@ -1,14 +1,33 @@
 import { execFileSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 
+/**
+ * backend/.env（コミットしない）から値を読む。
+ *
+ * DBのユーザー名・DB名は docker compose の設定と一致していなければならない。
+ * ここに直書きすると .env と二重管理になり、片方だけ変えたときに
+ * 「psqlは通るがアプリは繋がらない」といった分かりにくい失敗になる。
+ */
+function readBackendEnv(key: string): string | undefined {
+  const envPath = path.resolve(here, '../../../backend/.env')
+  if (!existsSync(envPath)) return undefined
+  for (const line of readFileSync(envPath, 'utf-8').split('\n')) {
+    const trimmed = line.trim()
+    if (!trimmed || trimmed.startsWith('#')) continue
+    const [name, ...rest] = trimmed.split('=')
+    if (name.trim() === key) return rest.join('=').trim()
+  }
+  return undefined
+}
+
 /** backend/docker-compose.yml の container_name。 */
 const DB_CONTAINER = 'raisetimeline-db'
-const DB_USER = 'raisetimeline'
-const DB_NAME = 'raisetimeline'
+const DB_USER = readBackendEnv('POSTGRES_USER') ?? 'raisetimeline_app'
+const DB_NAME = readBackendEnv('POSTGRES_DB') ?? 'raisetimeline'
 
 /** 投稿画像の保存先。backend/docker-compose.yml と application.yml の app.s3.bucket-name に対応。 */
 const MINIO_CONTAINER = 'raisetimeline-minio'

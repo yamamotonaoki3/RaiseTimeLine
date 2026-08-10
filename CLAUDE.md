@@ -112,6 +112,11 @@ Controller → Service → Repository
 ## アプリ起動手順
 
 ```bash
+# 0. 環境変数ファイルを用意する（初回のみ）
+#    DB認証情報・JWT署名鍵・MinIO認証情報は backend/.env から供給する。
+#    .env はコミットしない。値は必ず生成し直すこと（詳細は .env.example のコメント参照）。
+cp backend/.env.example backend/.env
+
 # 1. データベース + MinIO（S3互換ストレージ）起動
 #    backend/ ディレクトリで実行する。Composeプロジェクト名は raisetimeline
 cd backend
@@ -135,7 +140,7 @@ npm run dev
 
 画像（投稿画像・アバター）は本番ではAWS S3、ローカルではMinIOに保存する。**接続先が違うだけで、アプリのコードパスは同一**。
 バケットは公開せず、表示のたびに期限付きの presigned URL を発行する。
-MinIOのコンソールは `http://localhost:9001`（ユーザー・パスワードとも `raisetimeline`）。
+MinIOのコンソールは `http://localhost:9001`（ログイン情報は `backend/.env` の `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`）。
 
 ## アバター画像の移行（一回限り・未実施の環境のみ）
 
