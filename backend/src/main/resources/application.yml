@@ -20,6 +20,11 @@ spring:
       static-locations: classpath:/static/
 
 app:
+  cors:
+    # CORS で許可するオリジン。カンマ区切り。本番は CORS_ALLOWED_ORIGINS で上書きする。
+    #   5173 … 開発サーバ（vite dev / E2Eテスト）
+    #   4183 … 本番ビルド成果物の配信（vite preview / ブラウザパフォーマンステスト）
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:4183}
   # アバターのローカル保存は廃止した（S3に統一）。
   # この設定は AvatarMigrationRunner が移行元のファイルを読むためだけに残している。
   # 移行完了後に、Runner ごと削除する。

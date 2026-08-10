@@ -11,6 +11,7 @@
     "e2e:ui": "playwright test --project=chromium --ui",
     "e2e:all-browsers": "playwright test",
     "e2e:report": "playwright show-report",
+    "perf:browser": "playwright test -c playwright.perf.config.ts",
     "lint": "oxlint",
     "preview": "vite preview"
   },
@@ -31,8 +32,10 @@
     "@vitejs/plugin-react": "^6.0.2",
     "@vitest/ui": "^4.1.9",
     "jsdom": "^29.1.1",
+    "lighthouse": "^12.8.2",
     "msw": "^2.14.6",
     "oxlint": "^1.69.0",
+    "playwright-lighthouse": "^4.0.0",
     "typescript": "~6.0.2",
     "vite": "^8.1.0",
     "vitest": "^4.1.9"
