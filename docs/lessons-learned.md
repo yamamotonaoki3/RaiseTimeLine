@@ -4,6 +4,9 @@ Codexレビューで採用された指摘や、実装中の手直しのうち、
 
 ## 索引
 
+- 2026-08-10: presigned URLの発行が8箇所に散っていた問題を、Jacksonのシリアライザで1箇所に集約した件
+- 2026-08-09: E2Eの不安定さを追ったら、アプリ側の競合バグ（フィード切替）が見つかった件
+- 2026-08-09: アバター画像をS3へ統一した際、URL変換が8箇所に散っていた件
 - 2026-08-09: E2Eの画像テストが「Chromeでは通りFirefoxだけ落ちる」原因が、テスト用画像の破損だった件
 - 2026-08-09: Mapperのパラメータ名変更を、XMLだけ直してJava側を忘れて500になった件
 - 2026-08-09: 投稿画像の配信をpresigned URL方式にし、ローカル検証にMinIOを採用した件
@@ -11,6 +14,50 @@ Codexレビューで採用された指摘や、実装中の手直しのうち、
 - 2026-08-06: Playwright の storageState をファイルに保存して使い回せなかった件（リフレッシュトークンのローテーション）
 
 ## 記録
+
+### 2026-08-10: presigned URLの発行が8箇所に散っていた問題を、Jacksonのシリアライザで1箇所に集約した件
+
+- **種別**: 設計改善（レビュー指摘を受けての手直し）
+- **対象領域・関連ファイル**: backend/src/main/java/com/raisetimeline/api/storage/PresignedUrlSerializer.java, config/SpringBeanHandlerInstantiator.java, config/JacksonConfig.java, および avatarUrl/imageUrl を持つ全DTO（AuthResponse / MeResponse / RefreshResponse / PostResponse / UserProfileResponse / UserSummaryResponse）
+- **何が起きたか**: PR #70（アバターのS3統一）で、avatarUrlを返すDTOの組み立てが5ファイル8箇所に散っていることをレビューで指摘された。「呼び出し側でpresignedUrl()を呼ぶ」方式だと、新しい画面を追加するたびに変換を書き忘れるリスクが構造的に残る。
+- **対応**: 変換を呼び出し側から完全に排除し、**DTOのフィールドに `@JsonSerialize(using = PresignedUrlSerializer.class)` を付けるだけ**で、JSON出力時に自動でobject key→presigned URLへ変換される方式にした。
+  - `S3StorageService.presignedUrl(key)` はバケット直下のkeyを受け取るだけで用途を問わないため、投稿画像とアバターの両方を**同じシリアライザ1つ**で扱える
+  - サービス層（`AuthService` / `FollowService` / `PostService` / `UserService` / `UserController`）は生のkeyをDTOに詰めるだけになり、`presignedUrl()` の呼び出し・`S3AvatarService`/`S3PostImageService`への不要な依存を除去できた
+  - Jacksonにカスタムシリアライザへ`S3StorageService`をDIさせるため、`HandlerInstantiator`をSpringのBeanFactory経由で解決するよう設定した（`SpringBeanHandlerInstantiator` + `JacksonConfig`）
+- **想定外だった技術的つまずき**: このプロジェクトはSpring Boot 4系（Spring Framework 7）を使っており、**Jacksonが2.x系（`com.fasterxml.jackson.*`）ではなく3.x系（`tools.jackson.*`）に切り替わっていた**。クラス名も変わっている（`JsonSerializer`→`ValueSerializer`、`SerializerProvider`→`SerializationContext`、`Jackson2ObjectMapperBuilderCustomizer`→`JsonMapperBuilderCustomizer`、パッケージも`org.springframework.boot.autoconfigure.jackson`→`org.springframework.boot.jackson.autoconfigure`）。プロジェクトの他の場所で`com.fasterxml.jackson.databind.ObjectMapper`のimportが**エラーにならず解決した**ため誤解しかけたが、これは他ライブラリ（springdoc等）の推移的依存でjackson 2.xが混在していただけで、**実際にHTTPレスポンスをシリアライズしているのはJackson 3系のJsonMapper**だった。
+- **次回の行動規則**:
+  1. **同じ値を複数箇所で組み立てている状態を見つけたら、「呼び出し側に規律を求める」のではなく「型・アノテーション・DIで構造的に強制できないか」を先に検討する。** 呼び忘れ前提の対策（コーディング規約・レビューでのチェック）より、忘れようがない仕組みの方が保守コストが低い。
+  2. **フレームワークのメジャーバージョンが上がったとき、ライブラリのパッケージルート自体が変わっていないか確認する。** `com.fasterxml.jackson.*`が普通にimport解決できたことは「Jackson 2系が使われている」証拠にならない。実際にどのシリアライザ実装がHTTPレスポンスを処理しているかは、動かして確認する必要がある（今回は実際にAPIを叩いてpresigned URLが返ることを確認して初めて確信できた）。
+  3. **`@WebMvcTest`のようなスライドテストが通っても、Jacksonの実配線までは検証できないことがある。** モックしたDTOの該当フィールドがnullのままなら、シリアライザは一度も呼ばれずにテストが通ってしまう。配線そのものを確かめるには、実際に非null値を返してシリアライズさせる必要がある。
+- **状態**: 有効
+- **根拠**: Issue #65 / PR #70（レビュー指摘を受けての追加コミット）
+
+### 2026-08-09: E2Eの不安定さを追ったら、アプリ側の競合バグ（フィード切替）が見つかった件
+
+- **種別**: 手直し（E2Eの不安定さの調査から実装の不具合を発見）
+- **対象領域・関連ファイル**: frontend/src/pages/HomePage.tsx（loadMore）, frontend/e2e/pages/HomePage.ts（showAllFeed）
+- **何が起きたか**: #65 の作業中、E2Eが「単体では通るのに通し実行だと落ちる」状態になった。失敗時のスナップショットを見ると、**タブは「全体」なのに表示はフォロー中の投稿だけ**という状態だった。原因は `HomePage.tsx` の `loadMore()` が、**取得を開始したときのフィードと応答が返った時点のフィードが同じか確認せずに `setPosts` している**こと。初回（フォロー中）の読み込み中に「全体」へ切り替えると、あとから届いた古い応答が新しい表示を上書きする。**テストの不安定さではなく、利用者にも起きる実装の不具合だった。**
+- **対応**: E2E側は `showAllFeed()` で初回読み込みの完了を待ってから切り替えるようにして回避。**本体の修正は Issue #69 として分離**した（#65 のスコープ外のため）。
+- **次回の行動規則**:
+  1. **「単体では通るのに通し実行で落ちる」テストを、安易にリトライや待機時間の追加で片付けない。** 失敗時のスナップショットを読むと、テストではなくアプリの不具合であることがある。今回は「タブと表示内容が食い違う」という、目視では気づきにくい不具合をE2Eが拾っていた。
+  2. **非同期でデータを取得して state に入れる箇所は、応答が返った時点で「まだその結果が必要か」を確認する。** 切り替え・検索・ページングなど、リクエストが追い越される場面で古い結果が新しい表示を壊す。
+- **状態**: 有効
+- **根拠**: Issue #65 / #69
+
+### 2026-08-09: アバター画像をS3へ統一した際、URL変換が8箇所に散っていた件
+
+- **種別**: 設計判断・手直し
+- **対象領域・関連ファイル**: backend/src/main/java/com/raisetimeline/api/storage/S3StorageService.java, user/S3AvatarService.java, user/AvatarMigrationRunner.java, auth/AuthService.java, follow/FollowService.java, post/PostService.java, user/UserService.java, user/UserController.java
+- **何が起きたか**: アバターをローカルディスクからS3へ移す際、`avatarUrl` を返すDTOの組み立てが**5ファイル8箇所に散在**していた。1箇所でも presigned URL への変換を漏らすと、**その画面だけアバターが壊れる**。投稿画像（#63）は変換点が `PostService.enrich()` の1箇所だけだったため対照的だった。
+- **対応**:
+  - S3操作だけを `S3StorageService` に切り出し、投稿用・アバター用のサービスが検証とキー生成だけを持つ形にした（バリデーション規則が異なるため丸ごと共通化はしない）
+  - 8箇所すべてに変換を入れ、**漏れの検出をE2Eに任せた**。プロフィール・ナビ・投稿カード・フォロー一覧・検索結果でアバターの読み込みを検証している
+  - 既存データの移行は、ファイルのアップロードを伴うためFlywayでは行えず、**フラグ付きの一回限りの起動時処理**（`AvatarMigrationRunner`）とした。移行済みの行は対象外になるため冪等
+- **次回の行動規則**:
+  1. **同じ値を返すDTOの組み立てが複数箇所に散っている状態で、その値の生成方法を変えない。** 変えるなら、先に変換点を1箇所に寄せるか、**漏れを検出するテストを用意してから**着手する。目視の確認だけでは必ず漏れる。
+  2. **データの移行を伴うスキーマ変更では、「移行対象の判別条件」を移行後に成立しなくなる形にする。** 今回は「`/avatars/` で始まる行」を対象にしたため、移行後は対象0件となり再実行しても安全だった。
+- **状態**: 有効
+- **根拠**: Issue #65
 
 ### 2026-08-09: E2Eの画像テストが「Chromeでは通りFirefoxだけ落ちる」原因が、テスト用画像の破損だった件
 

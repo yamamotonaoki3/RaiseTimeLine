@@ -13,16 +13,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final FollowRepository followRepository;
     private final PostRepository postRepository;
-    private final AvatarStorageService avatarStorageService;
+    private final S3AvatarService s3AvatarService;
 
     public UserService(UserRepository userRepository,
                        FollowRepository followRepository,
                        PostRepository postRepository,
-                       AvatarStorageService avatarStorageService) {
+                       S3AvatarService s3AvatarService) {
         this.userRepository = userRepository;
         this.followRepository = followRepository;
         this.postRepository = postRepository;
-        this.avatarStorageService = avatarStorageService;
+        this.s3AvatarService = s3AvatarService;
     }
 
     public UserProfileResponse getProfile(Long targetUserId, String requestEmail) {
@@ -40,7 +40,7 @@ public class UserService {
         return new UserProfileResponse(
                 target.getId(),
                 target.getDisplayName(),
-                target.getAvatarUrl(),
+                target.getAvatarKey(),
                 target.getBio(),
                 followerCount,
                 followingCount,
@@ -55,11 +55,12 @@ public class UserService {
         if (!me.getId().equals(targetUserId)) {
             throw new ForbiddenException("このプロフィールを編集する権限がありません");
         }
-        String avatarUrl = null;
+        String avatarKey = null;
         if (avatar != null && !avatar.isEmpty()) {
-            avatarUrl = avatarStorageService.store(avatar, me.getAvatarUrl());
+            avatarKey = s3AvatarService.store(avatar, me.getAvatarKey());
         }
-        userRepository.update(targetUserId, displayName, bio, avatarUrl);
+        // avatarKey が null のときはアバターを変更しない（UserMapper.xml の <if> ガード）
+        userRepository.update(targetUserId, displayName, bio, avatarKey);
         return getProfile(targetUserId, requestEmail);
     }
 }

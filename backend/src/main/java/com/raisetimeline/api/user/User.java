@@ -9,7 +9,7 @@ public class User {
     private String passwordHash;
     private String username;
     private String displayName;
-    private String avatarUrl;
+    private String avatarKey;
     private String bio;
     private String yomi;
     private LocalDateTime createdAt;
@@ -54,12 +54,12 @@ public class User {
         this.displayName = displayName;
     }
 
-    public String getAvatarUrl() {
-        return avatarUrl;
+    public String getAvatarKey() {
+        return avatarKey;
     }
 
-    public void setAvatarUrl(String avatarUrl) {
-        this.avatarUrl = avatarUrl;
+    public void setAvatarKey(String avatarKey) {
+        this.avatarKey = avatarKey;
     }
 
     public String getBio() {

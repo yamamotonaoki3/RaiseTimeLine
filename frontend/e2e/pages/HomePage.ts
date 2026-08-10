@@ -27,6 +27,28 @@ export class HomePage {
     await this.page.goto('/')
   }
 
+  /**
+   * 「全体」タブに切り替える。
+   *
+   * 単に allTab.click() するだけでは不安定になる。理由は2つ。
+   *
+   * 1. リロード直後は前のDOMが残っていることがあり、クリックが空振りする
+   * 2. **初回（フォロー中）の読み込みが完了する前に切り替えると、あとから届いた
+   *    「フォロー中」のレスポンスが「全体」の表示を上書きしてしまう**
+   *    （HomePage の loadMore が、取得時のフィードを確認せずに setPosts するため。
+   *    タブは「全体」なのに中身がフォロー中、という状態になる。アプリ側の不具合）
+   *
+   * そのため、画面の描画と初回読み込みの完了を待ってから切り替える。
+   */
+  async showAllFeed() {
+    await this.composeButton.waitFor()
+    // 初回（フォロー中）の取得が終わったことを、投稿が描画されたことで確認する。
+    // シードで A は C をフォローし、C は25件投稿しているため、必ず1件以上表示される。
+    await this.postCards.first().waitFor()
+    await this.allTab.click()
+    await this.page.locator('.tab-btn.active', { hasText: '全体' }).waitFor()
+  }
+
   /** 本文で投稿カードを特定する */
   postByContent(content: string): Locator {
     return this.postCards.filter({ hasText: content })

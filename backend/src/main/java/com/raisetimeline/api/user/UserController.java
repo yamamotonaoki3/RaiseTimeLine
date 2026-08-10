@@ -111,7 +111,7 @@ public class UserController {
                 .map(u -> new UserSummaryResponse(
                         u.getId(),
                         u.getDisplayName(),
-                        u.getAvatarUrl(),
+                        u.getAvatarKey(),
                         u.getBio(),
                         followRepository.exists(me.getId(), u.getId())))
                 .toList();

@@ -17,7 +17,7 @@ test.describe('投稿', () => {
     home = new HomePage(page)
     await home.goto()
     // 作成した投稿は「全体」フィードに現れる（既定の「フォロー中」には自分の投稿しか出ない）
-    await home.allTab.click()
+    await home.showAllFeed()
     await expect(home.postCards.first()).toBeVisible()
   })
 
@@ -52,7 +52,7 @@ test.describe('投稿', () => {
     await expect(home.postByContent(content)).toHaveCount(0)
 
     await page.reload()
-    await home.allTab.click()
+    await home.showAllFeed()
     await expect(home.postCards.first()).toBeVisible()
     await expect(home.postByContent(content)).toHaveCount(0)
   })
@@ -74,7 +74,7 @@ test.describe('投稿画像', () => {
   test.beforeEach(async ({ page }) => {
     home = new HomePage(page)
     await home.goto()
-    await home.allTab.click()
+    await home.showAllFeed()
     await expect(home.postCards.first()).toBeVisible()
   })
 
@@ -92,7 +92,7 @@ test.describe('投稿画像', () => {
     await expectImageLoaded(home.postImage(content))
 
     await page.reload()
-    await home.allTab.click()
+    await home.showAllFeed()
     await expect(home.postByContent(content)).toBeVisible()
 
     await expectImageLoaded(home.postImage(content))
@@ -139,7 +139,7 @@ test.describe('投稿画像', () => {
     await expect(home.postImage(edited)).toHaveCount(0)
 
     await page.reload()
-    await home.allTab.click()
+    await home.showAllFeed()
     await expect(home.postByContent(edited)).toBeVisible()
     await expect(home.postImage(edited)).toHaveCount(0)
   })

@@ -162,10 +162,10 @@ public class PostService {
                 r.id(),
                 r.userId(),
                 r.displayName(),
-                r.avatarUrl(),
+                r.avatarKey(),
                 r.content(),
                 // DBにはobject keyが入っている。表示のたびに期限付きURLを発行する
-                s3PostImageService.presignedUrl(r.imageKey()),
+                r.imageKey(),
                 r.createdAt(),
                 r.updatedAt(),
                 likeCounts.getOrDefault(r.id(), 0L),

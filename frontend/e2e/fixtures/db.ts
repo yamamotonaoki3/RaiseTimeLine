@@ -94,7 +94,7 @@ function querySingleColumn(sql: string): string[] {
 }
 
 /**
- * E2Eテストが作った投稿画像だけを MinIO から削除する。
+ * E2Eテストが作った画像だけを MinIO から削除する。投稿画像とアバターの両方が対象。
  *
  * DBの行を消してしまうと対象のkeyが分からなくなるため、
  * **e2e-cleanup.sql より先に呼ぶ必要がある**。
@@ -105,13 +105,19 @@ function querySingleColumn(sql: string): string[] {
  * @returns 削除したオブジェクトの件数
  */
 export function deleteMinioObjectsForE2E(): number {
-  const keys = querySingleColumn(
+  const postImageKeys = querySingleColumn(
     `SELECT image_key FROM posts
      WHERE image_key IS NOT NULL
        AND (content LIKE '[E2E_TEST]%'
             OR user_id IN (SELECT id FROM users WHERE username LIKE 'e2euser\\_%'))`,
   )
+  const avatarKeys = querySingleColumn(
+    `SELECT avatar_key FROM users
+     WHERE avatar_key IS NOT NULL
+       AND username LIKE 'e2euser\\_%'`,
+  )
 
+  const keys = [...postImageKeys, ...avatarKeys]
   for (const key of keys) {
     // MinIOは /data/<バケット>/<key> にオブジェクトを持つ（ディレクトリとして格納される）
     execFileSync(

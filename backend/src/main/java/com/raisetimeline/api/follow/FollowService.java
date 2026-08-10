@@ -64,6 +64,7 @@ public class FollowService {
 
     private UserSummaryResponse toSummary(User u, Long myId) {
         boolean followedByMe = !u.getId().equals(myId) && followRepository.exists(myId, u.getId());
-        return new UserSummaryResponse(u.getId(), u.getDisplayName(), u.getAvatarUrl(), u.getBio(), followedByMe);
+        return new UserSummaryResponse(u.getId(), u.getDisplayName(),
+                u.getAvatarKey(), u.getBio(), followedByMe);
     }
 }

@@ -57,7 +57,8 @@ public class AuthService {
         String accessToken = jwtUtil.generateAccessToken(user.getEmail());
         String refreshToken = refreshTokenService.create(user.getId());
         AuthResponse response = new AuthResponse(
-                accessToken, user.getId(), user.getDisplayName(), user.getEmail(), user.getAvatarUrl());
+                accessToken, user.getId(), user.getDisplayName(), user.getEmail(),
+                user.getAvatarKey());
         return new TokenPair(response, refreshToken);
     }
 
@@ -69,7 +70,8 @@ public class AuthService {
         String accessToken = jwtUtil.generateAccessToken(user.getEmail());
         String refreshToken = refreshTokenService.create(user.getId());
         AuthResponse response = new AuthResponse(
-                accessToken, user.getId(), user.getDisplayName(), user.getEmail(), user.getAvatarUrl());
+                accessToken, user.getId(), user.getDisplayName(), user.getEmail(),
+                user.getAvatarKey());
         return new TokenPair(response, refreshToken);
     }
 
@@ -79,7 +81,8 @@ public class AuthService {
         String newRefreshToken = refreshTokenService.create(user.getId());
         String newAccessToken = jwtUtil.generateAccessToken(user.getEmail());
         RefreshResponse response = new RefreshResponse(
-                newAccessToken, user.getId(), user.getDisplayName(), user.getEmail(), user.getAvatarUrl());
+                newAccessToken, user.getId(), user.getDisplayName(), user.getEmail(),
+                user.getAvatarKey());
         return new RefreshResult(response, newRefreshToken);
     }
 
@@ -92,6 +95,6 @@ public class AuthService {
     public Optional<MeResponse> getCurrentUser(String email) {
         return userRepository.findByEmail(email)
                 .map(u -> new MeResponse(u.getId(), u.getDisplayName(), u.getEmail(),
-                        u.getAvatarUrl(), u.getBio()));
+                        u.getAvatarKey(), u.getBio()));
     }
 }

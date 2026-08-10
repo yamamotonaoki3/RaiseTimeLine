@@ -6,7 +6,7 @@ public record PostRow(
         Long id,
         Long userId,
         String displayName,
-        String avatarUrl,
+        String avatarKey,
         String content,
         String imageKey,
         LocalDateTime createdAt,

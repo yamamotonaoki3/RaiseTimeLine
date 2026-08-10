@@ -10,7 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.raisetimeline.api.auth.LoginRequest;
 import com.raisetimeline.api.auth.RegisterRequest;
 import com.raisetimeline.api.post.S3PostImageService;
-import com.raisetimeline.api.user.AvatarStorageService;
+import com.raisetimeline.api.user.S3AvatarService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,7 +36,7 @@ class LikeControllerTest {
     private S3PostImageService s3PostImageService;
 
     @MockitoBean
-    private AvatarStorageService avatarStorageService;
+    private S3AvatarService s3AvatarService;
 
     private MockMvc mockMvc;
     private String accessToken;

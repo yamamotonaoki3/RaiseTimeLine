@@ -24,7 +24,7 @@
     </select>
 
     <select id="findFollowers" resultType="com.raisetimeline.api.user.User">
-        SELECT u.id, u.email, u.password_hash, u.username, u.display_name, u.avatar_url, u.bio, u.created_at
+        SELECT u.id, u.email, u.password_hash, u.username, u.display_name, u.avatar_key, u.bio, u.created_at
         FROM follows f
         JOIN users u ON u.id = f.follower_id
         WHERE f.followee_id = #{followeeId}
@@ -32,7 +32,7 @@
     </select>
 
     <select id="findFollowing" resultType="com.raisetimeline.api.user.User">
-        SELECT u.id, u.email, u.password_hash, u.username, u.display_name, u.avatar_url, u.bio, u.created_at
+        SELECT u.id, u.email, u.password_hash, u.username, u.display_name, u.avatar_key, u.bio, u.created_at
         FROM follows f
         JOIN users u ON u.id = f.followee_id
         WHERE f.follower_id = #{followerId}

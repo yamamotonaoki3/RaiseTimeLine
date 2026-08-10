@@ -17,11 +17,18 @@ spring:
       max-request-size: 5MB
   web:
     resources:
-      static-locations: classpath:/static/,file:./uploads/
+      static-locations: classpath:/static/
 
 app:
+  # アバターのローカル保存は廃止した（S3に統一）。
+  # この設定は AvatarMigrationRunner が移行元のファイルを読むためだけに残している。
+  # 移行完了後に、Runner ごと削除する。
   upload:
     dir: uploads/avatars
+  migration:
+    # true にすると起動時に一度だけ、ローカルのアバターをS3へ移行する。
+    # 移行済みの行は対象外になるため、繰り返し起動しても二重処理されない。
+    avatar-to-s3: ${AVATAR_MIGRATION_ENABLED:false}
   s3:
     bucket-name: ${AWS_S3_BUCKET_NAME:raisetimeline-post-images}
     region: ${AWS_S3_REGION:ap-northeast-1}
