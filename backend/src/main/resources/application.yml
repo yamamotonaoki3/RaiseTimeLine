@@ -1,15 +1,19 @@
-server:
-  port: 8080
-
+# 全環境で共通の設定だけを置く。
+#
+# 環境によって変わる値（接続先・認証情報・許可オリジン等）は、ここには書かない。
+# 書いてしまうと「本番で上書きし忘れた項目が、黙ってローカル向けの値で動く」ことになるため。
+# 環境依存の値はプロファイルごとのファイルに置く。
+#
+#   application-local.yml … ローカル開発・E2E・性能計測（既定）
+#   application-prod.yml  … 本番。すべて環境変数から与える
+#   application-test.yml  … 自動テスト（src/test/resources、@ActiveProfiles("test") で有効化）
+#
+# 切り替えは SPRING_PROFILES_ACTIVE で行う。未指定なら local。
 spring:
   application:
     name: api
-  datasource:
-    # 接続先は秘密情報ではないため既定値を残す。認証情報は既定値を持たせない
-    # （未設定なら起動時にプレースホルダが解決できず失敗する ＝ 事故に気づける）。
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/raisetimeline}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+  profiles:
+    default: local
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -21,54 +25,22 @@ spring:
     resources:
       static-locations: classpath:/static/
 
-app:
-  cors:
-    # CORS で許可するオリジン。カンマ区切り。本番は CORS_ALLOWED_ORIGINS で上書きする。
-    #   5173 … 開発サーバ（vite dev / E2Eテスト）
-    #   4183 … 本番ビルド成果物の配信（vite preview / ブラウザパフォーマンステスト）
-    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:4183}
-  # アバターのローカル保存は廃止した（S3に統一）。
-  # この設定は AvatarMigrationRunner が移行元のファイルを読むためだけに残している。
-  # 移行完了後に、Runner ごと削除する。
-  upload:
-    dir: uploads/avatars
-  migration:
-    # true にすると起動時に一度だけ、ローカルのアバターをS3へ移行する。
-    # 移行済みの行は対象外になるため、繰り返し起動しても二重処理されない。
-    avatar-to-s3: ${AVATAR_MIGRATION_ENABLED:false}
-  s3:
-    bucket-name: ${AWS_S3_BUCKET_NAME:raisetimeline-post-images}
-    region: ${AWS_S3_REGION:ap-northeast-1}
-    # 既定はローカルのMinIOを向く。本番は AWS_S3_ENDPOINT を空にすることで実AWSのS3を向く。
-    endpoint: ${AWS_S3_ENDPOINT:http://localhost:9000}
-    # MinIOはパス形式（http://host:9000/bucket/key）を前提とする。
-    # falseのままだとバケット名がホスト名に混入し、接続できない。
-    path-style-access: ${AWS_S3_PATH_STYLE:true}
-    # 設定されていれば静的な認証情報を使う（MinIO用）。空なら環境変数から読む（実S3用）。
-    # 認証情報のため既定値は持たせない。
-    access-key: ${AWS_S3_ACCESS_KEY}
-    secret-key: ${AWS_S3_SECRET_KEY}
-    # 画像表示用のpresigned URLの有効期限（分）
-    presigned-url-expiration-minutes: ${AWS_S3_PRESIGNED_EXPIRATION_MINUTES:60}
-
 mybatis:
   configuration:
     map-underscore-to-camel-case: true
   mapper-locations: classpath:mapper/**/*.xml
 
 jwt:
-  # 署名鍵。既定値は持たせない（漏れた鍵が既定で使われる状態を作らないため）。
-  # 未設定なら起動時に失敗する。値は backend/.env で与える。
-  secret: ${JWT_SECRET}
+  # 署名鍵（jwt.secret）は環境依存の秘密情報のため、各プロファイル側で定義する。
   access-expiration: 900000
   refresh-expiration: 604800000
 
 springdoc:
+  # 公開するか否か（swagger-ui.enabled / api-docs.enabled）はプロファイルごとに決める。
   api-docs:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-    enabled: true
     operationsSorter: method
     tagsSorter: alpha
   default-produces-media-type: application/json

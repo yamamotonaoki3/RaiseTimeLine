@@ -1,0 +1,54 @@
+# 本番用のプロファイル。SPRING_PROFILES_ACTIVE=prod で有効になる。
+#
+# ここには実値を一切書かず、すべて環境変数から与える。
+# さらに、環境固有の値には**既定値を持たせない**。
+# 既定値を置くと「本番で設定し忘れた項目が、黙ってローカル向けの値で動く」ことになり、
+# CORSの許可オリジンやS3のエンドポイントのように、事故が起きるまで気づけない。
+# 未設定ならプレースホルダが解決できず起動に失敗する ＝ デプロイ時に気づける。
+#
+# 必要な環境変数:
+#   DB_URL / DB_USERNAME / DB_PASSWORD
+#   JWT_SECRET
+#   CORS_ALLOWED_ORIGINS
+#   AWS_S3_BUCKET_NAME / AWS_S3_REGION
+# 任意:
+#   SERVER_PORT（既定8080）
+#   AWS_S3_ENDPOINT（空なら実AWSのS3）
+#   AWS_S3_ACCESS_KEY / AWS_S3_SECRET_KEY（空ならIAMロール等、SDKの既定認証チェーン）
+#   AWS_S3_PRESIGNED_EXPIRATION_MINUTES（既定60）
+server:
+  # ポートは秘密でも環境固有でもないため既定値を持たせる。
+  port: ${SERVER_PORT:8080}
+
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+app:
+  cors:
+    # 既定値を持たせない。設定し忘れたらローカル用のオリジンで動くのではなく、起動に失敗させる。
+    allowed-origins: ${CORS_ALLOWED_ORIGINS}
+  s3:
+    bucket-name: ${AWS_S3_BUCKET_NAME}
+    region: ${AWS_S3_REGION}
+    # 空なら endpointOverride を指定せず、実AWSのS3を向く（S3Config が isBlank() で判定する）。
+    endpoint: ${AWS_S3_ENDPOINT:}
+    # 実AWSのS3は仮想ホスト形式が既定のため false。
+    path-style-access: ${AWS_S3_PATH_STYLE:false}
+    # 空を許可する。空のとき S3Config はSDKの既定認証チェーンにフォールバックするため、
+    # 本番ではIAMロールで動かせる（静的なアクセスキーを置かなくてよい）。
+    access-key: ${AWS_S3_ACCESS_KEY:}
+    secret-key: ${AWS_S3_SECRET_KEY:}
+    presigned-url-expiration-minutes: ${AWS_S3_PRESIGNED_EXPIRATION_MINUTES:60}
+
+jwt:
+  secret: ${JWT_SECRET}
+
+springdoc:
+  # 本番ではAPI仕様を公開しない。エンドポイント一覧とパラメータ構造は攻撃の手がかりになる。
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

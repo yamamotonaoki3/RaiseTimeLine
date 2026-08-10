@@ -1,0 +1,52 @@
+# ローカル開発用のプロファイル（既定）。
+#
+# 起動時にプロファイルを指定しなければ、このファイルが使われる（application.yml の spring.profiles.default）。
+# E2Eテスト（frontend/e2e/）とブラウザ性能計測（frontend/perf-browser/）もこの設定で動く。
+#
+# 認証情報などの実値はこのファイルに書かない。backend/.env（コミットしない）から
+# 環境変数として与える。docker compose は .env を自動で読み、gradlew bootRun へは
+# build.gradle.kts が読み込んで渡す。ひな形は backend/.env.example を参照。
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/raisetimeline
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+app:
+  cors:
+    # 5173 … 開発サーバ（vite dev / E2Eテスト）
+    # 4183 … 本番ビルド成果物の配信（vite preview / ブラウザ性能計測）
+    allowed-origins: http://localhost:5173,http://localhost:4183
+  # アバターのローカル保存は廃止した（S3に統一）。
+  # この設定は AvatarMigrationRunner が移行元のファイルを読むためだけに残している。
+  # 移行完了後に、Runner ごと削除する。本番では使わないため prod プロファイルには置かない。
+  upload:
+    dir: uploads/avatars
+  migration:
+    # true にすると起動時に一度だけ、ローカルのアバターをS3へ移行する。
+    # 移行済みの行は対象外になるため、繰り返し起動しても二重処理されない。
+    avatar-to-s3: ${AVATAR_MIGRATION_ENABLED:false}
+  s3:
+    # ローカルは docker compose の MinIO を向く。
+    bucket-name: raisetimeline-post-images
+    region: ap-northeast-1
+    endpoint: http://localhost:9000
+    # MinIOはパス形式（http://host:9000/bucket/key）を前提とする。
+    # false にするとバケット名がホスト名に混入し、接続できない。
+    path-style-access: true
+    access-key: ${AWS_S3_ACCESS_KEY}
+    secret-key: ${AWS_S3_SECRET_KEY}
+    # 画像表示用のpresigned URLの有効期限（分）
+    presigned-url-expiration-minutes: 60
+
+jwt:
+  secret: ${JWT_SECRET}
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
