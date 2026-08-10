@@ -51,3 +51,26 @@ checkstyle {
 tasks.withType<Test> {
     useJUnitPlatform()
 }
+
+/**
+ * ローカル開発用の秘密情報を bootRun に渡す。
+ *
+ * 実値は backend/.env（.gitignore 対象）に置き、docker compose と bootRun の両方が
+ * そこを唯一の情報源とする。Spring Boot は .env を自動では読まないため、ここで環境変数に載せる。
+ *
+ * .env が無い場合は何もしない。test / build は application-test.yml で完結するため、
+ * CIなど .env を置けない環境でも動く必要がある。
+ */
+tasks.named<org.springframework.boot.gradle.tasks.run.BootRun>("bootRun") {
+    val envFile = rootProject.file(".env")
+    if (envFile.exists()) {
+        envFile.readLines()
+            .map { it.trim() }
+            .filter { it.isNotEmpty() && !it.startsWith("#") && it.contains("=") }
+            .forEach { line ->
+                val key = line.substringBefore("=").trim()
+                val value = line.substringAfter("=").trim()
+                environment(key, value)
+            }
+    }
+}
