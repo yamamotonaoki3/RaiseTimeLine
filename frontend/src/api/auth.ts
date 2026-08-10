@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { API_BASE_URL } from './config'
 
 export interface AuthResponse {
   accessToken: string
@@ -27,6 +28,7 @@ export function getAccessToken() {
 }
 
 const api = axios.create({
+  baseURL: API_BASE_URL,
   withCredentials: true,
 })
 
@@ -56,7 +58,11 @@ api.interceptors.response.use(
       }
       isRefreshing = true
       try {
+        // ここは api インスタンスを経由しない（インターセプタが再帰的に走るのを避けるため）。
+        // そのぶん baseURL も自前で渡す必要がある。渡し忘れると、通常のAPIと
+        // トークン更新だけが別のオリジンを向くというちぐはぐな状態になる。
         const { data } = await axios.post<RefreshResponse>('/api/auth/refresh', null, {
+          baseURL: API_BASE_URL,
           withCredentials: true,
         })
         currentAccessToken = data.accessToken

@@ -1,6 +1,7 @@
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
 import { type RefreshResponse, logout as apiLogout, setAccessToken } from '../api/auth'
+import { API_BASE_URL } from '../api/config'
 import { type User, AuthContext } from './auth-context'
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -8,8 +9,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // 起動時のセッション復元。api インスタンスを経由しないため baseURL も自前で渡す。
+    // 渡し忘れると、リロードしたときだけログイン状態が復元されない状態になる。
     axios
-      .post<RefreshResponse>('/api/auth/refresh', null, { withCredentials: true })
+      .post<RefreshResponse>('/api/auth/refresh', null, {
+        baseURL: API_BASE_URL,
+        withCredentials: true,
+      })
       .then(({ data }) => {
         setAccessToken(data.accessToken)
         setUser({

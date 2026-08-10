@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# 手元だけの環境変数の上書き（.env.development / .env.production はコミットする）
+.env.local
+.env.*.local
+
 # ブラウザパフォーマンステスト（Lighthouse）の計測結果
 perf-browser/results
 
