@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# ブラウザパフォーマンステスト（Lighthouse）の計測結果
+perf-browser/results
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

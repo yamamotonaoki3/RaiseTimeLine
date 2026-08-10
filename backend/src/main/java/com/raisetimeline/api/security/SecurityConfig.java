@@ -1,6 +1,7 @@
 package com.raisetimeline.api.security;
 
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -28,11 +29,23 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final CustomUserDetailsService userDetailsService;
 
+    /**
+     * CORS で許可するオリジン。application.yml の app.cors.allowed-origins で設定する。
+     *
+     * 開発用の Vite（5173）だけでなく、本番ビルド成果物を配信する vite preview（4183）も
+     * 許可する必要がある。ここを決め打ちにしていると、preview に対する
+     * ブラウザパフォーマンステストで /api/auth/refresh が 403 になり、
+     * ログイン状態を復元できない。
+     */
+    private final List<String> allowedOrigins;
+
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthFilter,
-            CustomUserDetailsService userDetailsService) {
+            CustomUserDetailsService userDetailsService,
+            @Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.userDetailsService = userDetailsService;
+        this.allowedOrigins = allowedOrigins;
     }
 
     @Bean
@@ -67,7 +80,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(allowedOrigins);
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
