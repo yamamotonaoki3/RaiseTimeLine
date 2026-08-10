@@ -13,8 +13,6 @@ out/
 .env
 .env.local
 .env.*.local
-application-local.yml
-application-local.properties
 
 # Node.js / React
 node_modules/

@@ -39,17 +39,34 @@ public class SecurityConfig {
      */
     private final List<String> allowedOrigins;
 
+    /**
+     * API仕様（springdoc）を公開するか。プロファイルごとの設定に追従する。
+     *
+     * 本番（application-prod.yml）では false にしている。そのとき、ここで認証を免除したままだと
+     * ハンドラが存在しないパスだけが素通りし、500 を返す不格好な状態になる。
+     * 公開しないなら認証免除もしない、と揃えることで、他の未知のパスと同じ 401 になる。
+     */
+    private final boolean apiDocsEnabled;
+
     public SecurityConfig(
             JwtAuthenticationFilter jwtAuthFilter,
             CustomUserDetailsService userDetailsService,
-            @Value("${app.cors.allowed-origins}") List<String> allowedOrigins) {
+            @Value("${app.cors.allowed-origins}") List<String> allowedOrigins,
+            @Value("${springdoc.api-docs.enabled:true}") boolean apiDocsEnabled) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.userDetailsService = userDetailsService;
         this.allowedOrigins = allowedOrigins;
+        this.apiDocsEnabled = apiDocsEnabled;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        if (apiDocsEnabled) {
+            http.authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/v3/api-docs/**", "/swagger-ui/**",
+                            "/swagger-ui.html").permitAll());
+        }
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -58,8 +75,6 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(unauthorizedEntryPoint()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**",
-                                "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/register", "/api/auth/login",
                                 "/api/auth/refresh", "/api/auth/logout").permitAll()
                         .requestMatchers("/avatars/**").permitAll()

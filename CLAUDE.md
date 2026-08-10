@@ -131,6 +131,20 @@ cd frontend
 npm run dev
 ```
 
+### 設定プロファイル
+
+バックエンドの設定は Spring Boot のプロファイルで切り替える。
+
+| プロファイル | 設定ファイル | 用途 |
+| --- | --- | --- |
+| `local`（既定） | `application-local.yml` | ローカル開発・E2E・性能計測。値は `backend/.env` から供給 |
+| `prod` | `application-prod.yml` | 本番。すべて実行環境の環境変数から供給し、既定値を持たない |
+| `test` | `application-test.yml` | 自動テスト（`@ActiveProfiles("test")`） |
+
+プロファイルを指定せずに起動すると `local` になる。本番は `SPRING_PROFILES_ACTIVE=prod` を設定する。
+全環境共通の設定だけが `application.yml` に残っている。**環境によって変わる値を `application.yml` に書かないこと**
+（本番で上書きし忘れた項目が、黙ってローカル向けの値で動いてしまうため）。
+
 起動するコンテナは2つ。
 
 | コンテナ | 用途 | ポート |
