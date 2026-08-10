@@ -152,4 +152,63 @@ describe('HomePage', () => {
       expect(screen.getByText('新規投稿')).toBeInTheDocument()
     })
   })
+
+  // --- フィード切替時の競合（#69） ---
+
+  it('フォロー中の読み込み中に全体へ切り替えても、遅れて届いたフォロー中の応答で上書きされない', async () => {
+    let resolveFollowing!: (posts: Awaited<ReturnType<typeof getPosts>>) => void
+    const followingPromise = new Promise<Awaited<ReturnType<typeof getPosts>>>((resolve) => {
+      resolveFollowing = resolve
+    })
+
+    const followingOnlyPost = {
+      id: 1,
+      userId: 2,
+      displayName: 'フォロー中の相手',
+      avatarUrl: null,
+      content: 'フォロー中限定の投稿',
+      imageUrl: null,
+      createdAt: '2026-01-01T00:00:00',
+      updatedAt: '2026-01-01T00:00:00',
+      likeCount: 0,
+      likedByMe: false,
+      commentCount: 0,
+    }
+    const allFeedPost = {
+      id: 2,
+      userId: 3,
+      displayName: '全体の相手',
+      avatarUrl: null,
+      content: '全体投稿',
+      imageUrl: null,
+      createdAt: '2026-01-01T00:00:00',
+      updatedAt: '2026-01-01T00:00:00',
+      likeCount: 0,
+      likedByMe: false,
+      commentCount: 0,
+    }
+
+    vi.mocked(getPosts).mockImplementation((params) => {
+      if (params?.feed === 'following') return followingPromise
+      return Promise.resolve([allFeedPost])
+    })
+
+    renderHomePage()
+
+    // 初回（フォロー中）の応答が返る前に「全体」へ切り替える
+    fireEvent.click(screen.getByRole('button', { name: '全体' }))
+    await waitFor(() => {
+      expect(screen.getByText('全体投稿')).toBeInTheDocument()
+    })
+
+    // 遅れてフォロー中の応答が届く
+    resolveFollowing(followingOnlyPost ? [followingOnlyPost] : [])
+
+    // 「全体」タブの表示が、遅れて届いたフォロー中のデータで上書きされていないこと
+    await waitFor(() => {
+      expect(screen.queryByText('フォロー中限定の投稿')).not.toBeInTheDocument()
+      expect(screen.getByText('全体投稿')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '全体' })).toHaveClass('active')
+    })
+  })
 })

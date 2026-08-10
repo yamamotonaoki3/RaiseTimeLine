@@ -44,13 +44,22 @@ export default function HomePage() {
 
   const loadMore = useCallback(async () => {
     if (loadingRef.current || !hasMoreRef.current) return
+    // 応答が返った時点でフィードが切り替わっていないか確認するため、
+    // リクエスト開始時点のフィードを控えておく。
+    const requestedFeed = feedRef.current
     loadingRef.current = true
     setLoading(true)
     try {
       const params = cursorRef.current != null
-        ? { cursor: cursorRef.current, feed: feedRef.current }
-        : { feed: feedRef.current }
+        ? { cursor: cursorRef.current, feed: requestedFeed }
+        : { feed: requestedFeed }
       const fetched = await getPosts(params)
+
+      // 取得中にフィードが切り替わっていたら、この結果は古いので使わない。
+      // switchFeed() が posts / cursor 等を既に新フィード用にリセットしているため、
+      // ここで setPosts すると新しい表示が古いフィードのデータで上書きされてしまう。
+      if (feedRef.current !== requestedFeed) return
+
       if (fetched.length === 0) {
         hasMoreRef.current = false
         setHasMore(false)
@@ -69,7 +78,13 @@ export default function HomePage() {
         setHasMore(false)
       }
     } finally {
-      loadingRef.current = false
+      // 自分が古いフィードのリクエストだった場合、既に switchFeed() が
+      // ガードを解除し、新フィードの loadMore() が別途進行中の可能性がある。
+      // その場合はここでガードを触らない（新しい呼び出しの loadingRef を
+      // 誤って false のまま放置してしまうのを防ぐ）。
+      if (feedRef.current === requestedFeed) {
+        loadingRef.current = false
+      }
       setLoading(false)
     }
   }, [])
@@ -83,6 +98,10 @@ export default function HomePage() {
     cursorRef.current = null
     hasMoreRef.current = true
     setHasMore(true)
+    // 前のフィードの読み込みがまだ進行中でも、新しいフィードの読み込みを
+    // 即座に開始できるようガードを解除する。前の読み込みが後から解決しても、
+    // loadMore() 側でフィードの不一致を検知して結果を捨てるため上書きされない。
+    loadingRef.current = false
   }, [])
 
   useEffect(() => {
