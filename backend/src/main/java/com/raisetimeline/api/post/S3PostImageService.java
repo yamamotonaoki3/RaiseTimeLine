@@ -54,11 +54,6 @@ public class S3PostImageService {
         return key;
     }
 
-    /** 期限付きの参照URLを発行する。 */
-    public String presignedUrl(String key) {
-        return s3StorageService.presignedUrl(key);
-    }
-
     /** object key を指定して削除する。 */
     public void delete(String key) {
         s3StorageService.delete(key);

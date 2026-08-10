@@ -13,7 +13,6 @@ import com.raisetimeline.api.comment.CommentRepository;
 import com.raisetimeline.api.exception.ForbiddenException;
 import com.raisetimeline.api.like.LikeRepository;
 import com.raisetimeline.api.like.PostCount;
-import com.raisetimeline.api.user.S3AvatarService;
 import com.raisetimeline.api.user.User;
 import com.raisetimeline.api.user.UserRepository;
 import java.time.LocalDateTime;
@@ -40,8 +39,6 @@ class PostServiceTest {
     private CommentRepository commentRepository;
     @Mock
     private S3PostImageService s3PostImageService;
-    @Mock
-    private S3AvatarService s3AvatarService;
 
     @InjectMocks
     private PostService postService;

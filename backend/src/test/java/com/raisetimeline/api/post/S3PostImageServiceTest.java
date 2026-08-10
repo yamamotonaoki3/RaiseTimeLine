@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.raisetimeline.api.exception.BadRequestException;
 import com.raisetimeline.api.storage.S3StorageService;
@@ -90,7 +89,9 @@ class S3PostImageServiceTest {
         assertThat(captor.getValue()).isEqualTo(key).endsWith(".jpg");
     }
 
-    // --- delete() / presignedUrl() は委譲するだけ ---
+    // --- delete() は委譲するだけ ---
+    // presigned URL の発行は呼び出し側ではなく PresignedUrlSerializer が担う
+    // （PresignedUrlSerializerTest を参照）。
 
     @Test
     @DisplayName("delete()は渡されたkeyをそのまま委譲する")
@@ -99,13 +100,5 @@ class S3PostImageServiceTest {
 
         // URLからkeyを逆算していた実装では、この形式のkeyを取り違えていた
         verify(s3StorageService).delete("posts/abc.png");
-    }
-
-    @Test
-    @DisplayName("presignedUrl()は委譲した結果を返す")
-    void presignedUrl_delegates() {
-        when(s3StorageService.presignedUrl("posts/abc.png")).thenReturn("http://localhost:9000/signed");
-
-        assertThat(service.presignedUrl("posts/abc.png")).isEqualTo("http://localhost:9000/signed");
     }
 }

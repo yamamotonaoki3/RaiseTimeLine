@@ -35,17 +35,15 @@ public class UserController {
     private final FollowService followService;
     private final FollowRepository followRepository;
     private final PostService postService;
-    private final S3AvatarService s3AvatarService;
 
     public UserController(UserService userService, UserRepository userRepository,
                           FollowService followService, FollowRepository followRepository,
-                          PostService postService, S3AvatarService s3AvatarService) {
+                          PostService postService) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.followService = followService;
         this.followRepository = followRepository;
         this.postService = postService;
-        this.s3AvatarService = s3AvatarService;
     }
 
     @GetMapping("/{id}")
@@ -113,7 +111,7 @@ public class UserController {
                 .map(u -> new UserSummaryResponse(
                         u.getId(),
                         u.getDisplayName(),
-                        s3AvatarService.presignedUrl(u.getAvatarKey()),
+                        u.getAvatarKey(),
                         u.getBio(),
                         followRepository.exists(me.getId(), u.getId())))
                 .toList();

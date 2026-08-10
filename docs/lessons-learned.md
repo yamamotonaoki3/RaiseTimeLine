@@ -4,6 +4,7 @@ Codexレビューで採用された指摘や、実装中の手直しのうち、
 
 ## 索引
 
+- 2026-08-10: presigned URLの発行が8箇所に散っていた問題を、Jacksonのシリアライザで1箇所に集約した件
 - 2026-08-09: E2Eの不安定さを追ったら、アプリ側の競合バグ（フィード切替）が見つかった件
 - 2026-08-09: アバター画像をS3へ統一した際、URL変換が8箇所に散っていた件
 - 2026-08-09: E2Eの画像テストが「Chromeでは通りFirefoxだけ落ちる」原因が、テスト用画像の破損だった件
@@ -13,6 +14,23 @@ Codexレビューで採用された指摘や、実装中の手直しのうち、
 - 2026-08-06: Playwright の storageState をファイルに保存して使い回せなかった件（リフレッシュトークンのローテーション）
 
 ## 記録
+
+### 2026-08-10: presigned URLの発行が8箇所に散っていた問題を、Jacksonのシリアライザで1箇所に集約した件
+
+- **種別**: 設計改善（レビュー指摘を受けての手直し）
+- **対象領域・関連ファイル**: backend/src/main/java/com/raisetimeline/api/storage/PresignedUrlSerializer.java, config/SpringBeanHandlerInstantiator.java, config/JacksonConfig.java, および avatarUrl/imageUrl を持つ全DTO（AuthResponse / MeResponse / RefreshResponse / PostResponse / UserProfileResponse / UserSummaryResponse）
+- **何が起きたか**: PR #70（アバターのS3統一）で、avatarUrlを返すDTOの組み立てが5ファイル8箇所に散っていることをレビューで指摘された。「呼び出し側でpresignedUrl()を呼ぶ」方式だと、新しい画面を追加するたびに変換を書き忘れるリスクが構造的に残る。
+- **対応**: 変換を呼び出し側から完全に排除し、**DTOのフィールドに `@JsonSerialize(using = PresignedUrlSerializer.class)` を付けるだけ**で、JSON出力時に自動でobject key→presigned URLへ変換される方式にした。
+  - `S3StorageService.presignedUrl(key)` はバケット直下のkeyを受け取るだけで用途を問わないため、投稿画像とアバターの両方を**同じシリアライザ1つ**で扱える
+  - サービス層（`AuthService` / `FollowService` / `PostService` / `UserService` / `UserController`）は生のkeyをDTOに詰めるだけになり、`presignedUrl()` の呼び出し・`S3AvatarService`/`S3PostImageService`への不要な依存を除去できた
+  - Jacksonにカスタムシリアライザへ`S3StorageService`をDIさせるため、`HandlerInstantiator`をSpringのBeanFactory経由で解決するよう設定した（`SpringBeanHandlerInstantiator` + `JacksonConfig`）
+- **想定外だった技術的つまずき**: このプロジェクトはSpring Boot 4系（Spring Framework 7）を使っており、**Jacksonが2.x系（`com.fasterxml.jackson.*`）ではなく3.x系（`tools.jackson.*`）に切り替わっていた**。クラス名も変わっている（`JsonSerializer`→`ValueSerializer`、`SerializerProvider`→`SerializationContext`、`Jackson2ObjectMapperBuilderCustomizer`→`JsonMapperBuilderCustomizer`、パッケージも`org.springframework.boot.autoconfigure.jackson`→`org.springframework.boot.jackson.autoconfigure`）。プロジェクトの他の場所で`com.fasterxml.jackson.databind.ObjectMapper`のimportが**エラーにならず解決した**ため誤解しかけたが、これは他ライブラリ（springdoc等）の推移的依存でjackson 2.xが混在していただけで、**実際にHTTPレスポンスをシリアライズしているのはJackson 3系のJsonMapper**だった。
+- **次回の行動規則**:
+  1. **同じ値を複数箇所で組み立てている状態を見つけたら、「呼び出し側に規律を求める」のではなく「型・アノテーション・DIで構造的に強制できないか」を先に検討する。** 呼び忘れ前提の対策（コーディング規約・レビューでのチェック）より、忘れようがない仕組みの方が保守コストが低い。
+  2. **フレームワークのメジャーバージョンが上がったとき、ライブラリのパッケージルート自体が変わっていないか確認する。** `com.fasterxml.jackson.*`が普通にimport解決できたことは「Jackson 2系が使われている」証拠にならない。実際にどのシリアライザ実装がHTTPレスポンスを処理しているかは、動かして確認する必要がある（今回は実際にAPIを叩いてpresigned URLが返ることを確認して初めて確信できた）。
+  3. **`@WebMvcTest`のようなスライドテストが通っても、Jacksonの実配線までは検証できないことがある。** モックしたDTOの該当フィールドがnullのままなら、シリアライザは一度も呼ばれずにテストが通ってしまう。配線そのものを確かめるには、実際に非null値を返してシリアライズさせる必要がある。
+- **状態**: 有効
+- **根拠**: Issue #65 / PR #70（レビュー指摘を受けての追加コミット）
 
 ### 2026-08-09: E2Eの不安定さを追ったら、アプリ側の競合バグ（フィード切替）が見つかった件
 

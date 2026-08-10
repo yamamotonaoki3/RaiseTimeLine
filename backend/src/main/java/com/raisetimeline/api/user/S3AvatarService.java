@@ -55,9 +55,4 @@ public class S3AvatarService {
         s3StorageService.delete(oldKey);
         return key;
     }
-
-    /** 期限付きの参照URLを発行する。keyがnullならnullを返す。 */
-    public String presignedUrl(String key) {
-        return s3StorageService.presignedUrl(key);
-    }
 }

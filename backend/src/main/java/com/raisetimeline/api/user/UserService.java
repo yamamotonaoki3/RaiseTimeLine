@@ -40,7 +40,7 @@ public class UserService {
         return new UserProfileResponse(
                 target.getId(),
                 target.getDisplayName(),
-                s3AvatarService.presignedUrl(target.getAvatarKey()),
+                target.getAvatarKey(),
                 target.getBio(),
                 followerCount,
                 followingCount,
