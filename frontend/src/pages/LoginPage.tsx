@@ -23,7 +23,7 @@ export default function LoginPage() {
         email: data.email,
         avatarUrl: data.avatarUrl,
       })
-      navigate('/')
+      void navigate('/')
     } catch (err: unknown) {
       const msg =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??

@@ -8,7 +8,7 @@ export default function NavBar() {
 
   const handleLogout = async () => {
     await logout()
-    navigate('/login')
+    void navigate('/login')
   }
 
   return (

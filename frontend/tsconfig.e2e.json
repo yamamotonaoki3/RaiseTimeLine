@@ -1,0 +1,40 @@
+{
+  /*
+   * E2E（e2e/）とブラウザ性能計測（perf-browser/）用。
+   *
+   * これらは Playwright が実行するため、これまでどの tsconfig にも含まれておらず
+   * 型チェックが一度も走っていなかった。型情報を使う ESLint のルール
+   * （no-floating-promises 等）には型情報が必要なため、対象として定義する。
+   *
+   * await 忘れはテストコードでこそ深刻で、「テストは通るが実際には何も検証していない」
+   * という形になる。
+   */
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.e2e.tsbuildinfo",
+    "target": "es2023",
+    // page.evaluate() の中で DOM を触るため DOM が要る
+    "lib": ["ES2023", "DOM"],
+    "module": "esnext",
+    "types": ["node"],
+    "skipLibCheck": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    // erasableSyntaxOnly は有効にしない。
+    // これは「型を消すだけで実行できる構文に限る」制約で、Node の型ストリップ実行を
+    // 前提とする src/ 向けの設定。e2e/ と perf-browser/ は Playwright が自前の
+    // トランスパイラで実行するため制約を受けず、Page Object の
+    // constructor パラメータプロパティ（constructor(private readonly page: Page)）を
+    // そのまま使える。
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["e2e", "perf-browser", "playwright.config.ts", "playwright.perf.config.ts"]
+}

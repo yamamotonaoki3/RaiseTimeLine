@@ -42,7 +42,7 @@ export default function RegisterPage() {
         email: data.email,
         avatarUrl: data.avatarUrl,
       })
-      navigate('/')
+      void navigate('/')
     } catch (err: unknown) {
       const res = (err as { response?: { data?: { errors?: Array<{ field: string; message: string }>; message?: string } } })?.response?.data
       if (res?.errors) {

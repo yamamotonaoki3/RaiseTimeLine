@@ -26,7 +26,7 @@ export default function PostDetailPage() {
 
   const handleDelete = async (postId: number) => {
     await deletePost(postId)
-    navigate('/')
+    void navigate('/')
   }
 
   return (
