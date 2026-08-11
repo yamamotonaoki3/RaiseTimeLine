@@ -20,15 +20,6 @@ app:
     # 5173 … 開発サーバ（vite dev / E2Eテスト）
     # 4183 … 本番ビルド成果物の配信（vite preview / ブラウザ性能計測）
     allowed-origins: http://localhost:5173,http://localhost:4183
-  # アバターのローカル保存は廃止した（S3に統一）。
-  # この設定は AvatarMigrationRunner が移行元のファイルを読むためだけに残している。
-  # 移行完了後に、Runner ごと削除する。本番では使わないため prod プロファイルには置かない。
-  upload:
-    dir: uploads/avatars
-  migration:
-    # true にすると起動時に一度だけ、ローカルのアバターをS3へ移行する。
-    # 移行済みの行は対象外になるため、繰り返し起動しても二重処理されない。
-    avatar-to-s3: ${AVATAR_MIGRATION_ENABLED:false}
   s3:
     # ローカルは docker compose の MinIO を向く。
     bucket-name: raisetimeline-post-images

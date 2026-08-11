@@ -21,8 +21,6 @@ mybatis:
 app:
   cors:
     allowed-origins: http://localhost:5173
-  upload:
-    dir: build/test-uploads
   s3:
     bucket-name: test-bucket
     region: ap-northeast-1

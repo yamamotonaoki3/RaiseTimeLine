@@ -178,22 +178,6 @@ npm run dev
 バケットは公開せず、表示のたびに期限付きの presigned URL を発行する。
 MinIOのコンソールは `http://localhost:9001`（ログイン情報は `backend/.env` の `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`）。
 
-## アバター画像の移行（一回限り・未実施の環境のみ）
-
-アバターは以前ローカルディスクに保存していた。既存データがある環境では、初回のみ移行が必要。
-
-```bash
-# 移行を有効にして起動する。対象は avatar_key が '/avatars/' で始まる行のみ
-AVATAR_MIGRATION_ENABLED=true .\gradlew.bat bootRun
-```
-
-- 実ファイルをS3へアップロードし、DBの値を object key に書き換える
-- ファイルが見つからない行は NULL に落とし、警告ログを出して起動は継続する
-- **移行済みの行は対象外になるため、繰り返し起動しても二重処理されない**
-- ログの「アバター移行: 完了 対象=N 移行=N ファイル欠損=N」で結果を確認する
-
-移行後はフラグを戻す。`AvatarMigrationRunner` と `app.upload.dir` 設定は、全環境の移行完了後に削除する。
-
 ## テスト実行
 
 ```bash

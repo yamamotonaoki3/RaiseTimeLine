@@ -45,14 +45,4 @@
         WHERE id = #{id}
     </update>
 
-    <!-- アバター移行用。移行完了後に AvatarMigrationRunner ごと削除する -->
-    <select id="findByAvatarKeyPrefix" resultType="com.raisetimeline.api.user.User">
-        SELECT * FROM users
-        WHERE avatar_key LIKE CONCAT(#{prefix}, '%')
-    </select>
-
-    <update id="updateAvatarKey">
-        UPDATE users SET avatar_key = #{avatarKey} WHERE id = #{id}
-    </update>
-
 </mapper>

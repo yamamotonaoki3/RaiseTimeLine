@@ -172,31 +172,6 @@ class UserRepositoryTest {
         assertThat(result.getAvatarKey()).isEqualTo("avatars/keep.png");
     }
 
-    @Test
-    @DisplayName("updateAvatarKey(): null を渡すとアバターを外せる（移行処理が使う）")
-    void updateAvatarKey_canClearWithNull() {
-        User user = createUser("avatar3@example.com", "avatar_user3", "アバター3", null);
-        userRepository.update(user.getId(), "アバター3", null, "avatars/old.png");
-
-        userRepository.updateAvatarKey(user.getId(), null);
-
-        User result = userRepository.findById(user.getId()).orElseThrow();
-        assertThat(result.getAvatarKey()).isNull();
-    }
-
-    @Test
-    @DisplayName("findByAvatarKeyPrefix(): 接頭辞が一致する行だけを返す（移行処理が使う）")
-    void findByAvatarKeyPrefix_returnsMatchingRows() {
-        User legacy = createUser("avatar4@example.com", "avatar_user4", "アバター4", null);
-        User migrated = createUser("avatar5@example.com", "avatar_user5", "アバター5", null);
-        userRepository.update(legacy.getId(), "アバター4", null, "/avatars/legacy.png");
-        userRepository.update(migrated.getId(), "アバター5", null, "avatars/migrated.png");
-
-        List<User> result = userRepository.findByAvatarKeyPrefix("/avatars/");
-
-        assertThat(result).extracting(User::getId).contains(legacy.getId());
-        assertThat(result).extracting(User::getId).doesNotContain(migrated.getId());
-    }
 
     private User createUser(String email, String username, String displayName, String yomi) {
         User user = new User();
