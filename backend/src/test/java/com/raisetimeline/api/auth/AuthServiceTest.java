@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.raisetimeline.api.auth.refreshtoken.RefreshTokenService;
+import com.raisetimeline.api.auth.refreshtoken.RotationResult;
 import com.raisetimeline.api.exception.DuplicateDisplayNameException;
 import com.raisetimeline.api.exception.DuplicateEmailException;
 import com.raisetimeline.api.exception.DuplicateUsernameException;
@@ -129,17 +130,32 @@ class AuthServiceTest {
     // --- refreshSession() の分岐網羅 ---
 
     @Test
-    @DisplayName("refreshSession: 有効なトークンの場合 RefreshResult が返る")
+    @DisplayName("refreshSession: 有効なトークンの場合、ローテーション結果が RefreshResult になる")
     void refreshSession_validToken_returnsResult() {
-        when(refreshTokenService.validate("valid-token")).thenReturn(existingUser);
-        when(refreshTokenService.create(existingUser.getId())).thenReturn("new-refresh-token");
+        when(refreshTokenService.rotate("valid-token"))
+                .thenReturn(new RotationResult(existingUser, "new-refresh-token", true));
         when(jwtUtil.generateAccessToken(existingUser.getEmail())).thenReturn("new-access-token");
 
         RefreshResult result = authService.refreshSession("valid-token");
 
         assertThat(result).isNotNull();
         assertThat(result.newRefreshToken()).isEqualTo("new-refresh-token");
-        verify(refreshTokenService).delete("valid-token");
+        assertThat(result.response().accessToken()).isEqualTo("new-access-token");
+    }
+
+    @Test
+    @DisplayName("refreshSession: 猶予期間内の再提示では、返ってきた既存トークンをそのまま返す")
+    void refreshSession_withinGrace_returnsSameToken() {
+        // 複数タブの同時アクセス。rotate() は新規発行せず、既に発行済みのトークンを返す。
+        when(refreshTokenService.rotate("already-used-token"))
+                .thenReturn(new RotationResult(existingUser, "shared-refresh-token", false));
+        when(jwtUtil.generateAccessToken(existingUser.getEmail())).thenReturn("new-access-token");
+
+        RefreshResult result = authService.refreshSession("already-used-token");
+
+        assertThat(result.newRefreshToken()).isEqualTo("shared-refresh-token");
+        // アクセストークンはリクエストごとに発行してよい（タブごとに必要なため）
+        assertThat(result.response().accessToken()).isEqualTo("new-access-token");
     }
 
     // --- logout() の分岐網羅 ---

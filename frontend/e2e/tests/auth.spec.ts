@@ -89,3 +89,40 @@ test('ログアウトするとログイン画面に戻り、保護されたペ�
   await page.goto('/')
   await expect(page).toHaveURL('/login')
 })
+
+/**
+ * 複数タブの同時アクセス（#72）。
+ *
+ * アクセストークンはメモリにのみ持つため、タブを開くたびに AuthContext が
+ * /api/auth/refresh を呼ぶ。リフレッシュトークンはローテーションするので、
+ * 2つのタブがほぼ同時に開くと両方が同じトークンを送ることになる。
+ *
+ * サーバ側で「猶予期間内の再提示は正常な同時アクセスとみなし、新規発行せず
+ * 同じ置き換え先を返す」ようにしたため、両方ともログイン状態を保てる。
+ * この扱いがないと、後から届いたほうが401になりログイン画面へ飛ばされる。
+ */
+test('2つのタブを同時に開いても、両方がログイン状態を維持する', async ({ page, context }) => {
+  const loginPage = new LoginPage(page)
+  await loginPage.goto()
+  await loginPage.login(USER_A.email, USER_A.password)
+  await expect(page).toHaveURL('/')
+
+  // 同じコンテキスト（＝同じCookie）で2つのタブを開く。
+  // Promise.all で同時に読み込ませ、リフレッシュを競合させる。
+  const tab1 = await context.newPage()
+  const tab2 = await context.newPage()
+  await Promise.all([tab1.goto('/'), tab2.goto('/')])
+
+  for (const tab of [tab1, tab2]) {
+    await expect(tab).toHaveURL('/')
+    await expect(tab.getByRole('button', { name: 'ログアウト' })).toBeVisible()
+  }
+
+  // 元のタブも巻き添えでログアウトされていないこと
+  await page.reload()
+  await expect(page).toHaveURL('/')
+  await expect(page.getByRole('button', { name: 'ログアウト' })).toBeVisible()
+
+  await tab1.close()
+  await tab2.close()
+})

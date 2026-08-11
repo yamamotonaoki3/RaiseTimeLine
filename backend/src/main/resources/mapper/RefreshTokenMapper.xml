@@ -12,6 +12,17 @@
         SELECT * FROM refresh_tokens WHERE token = #{token}
     </select>
 
+    <!--
+        未使用の行だけを使用済みにする。
+        同じトークンで同時に2つのリクエストが来ても、更新できるのは片方だけになり、
+        もう片方は更新件数0で「先を越された」ことを検知できる。
+    -->
+    <update id="markUsed">
+        UPDATE refresh_tokens
+        SET used_at = #{usedAt}, replaced_by = #{replacedBy}
+        WHERE token = #{token} AND used_at IS NULL
+    </update>
+
     <delete id="deleteByToken">
         DELETE FROM refresh_tokens WHERE token = #{token}
     </delete>

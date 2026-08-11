@@ -10,6 +10,12 @@ public class RefreshToken {
     private LocalDateTime expiresAt;
     private LocalDateTime createdAt;
 
+    /** 使用された時刻。null なら未使用。 */
+    private LocalDateTime usedAt;
+
+    /** このトークンを使って発行された次のトークン。未使用なら null。 */
+    private String replacedBy;
+
     public Long getId() {
         return id;
     }
@@ -48,5 +54,26 @@ public class RefreshToken {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUsedAt() {
+        return usedAt;
+    }
+
+    public void setUsedAt(LocalDateTime usedAt) {
+        this.usedAt = usedAt;
+    }
+
+    public String getReplacedBy() {
+        return replacedBy;
+    }
+
+    public void setReplacedBy(String replacedBy) {
+        this.replacedBy = replacedBy;
+    }
+
+    /** まだ一度も使われていないか。 */
+    public boolean isUnused() {
+        return usedAt == null;
     }
 }
