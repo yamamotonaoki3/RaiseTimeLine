@@ -41,6 +41,16 @@ jwt:
   # 猶予を過ぎた再提示は盗用の疑いとして全セッションを失効させる。
   refresh-rotation-grace-seconds: 30
 
+app:
+  cleanup:
+    refresh-tokens:
+      # 期限切れリフレッシュトークンの削除を走らせる時刻（毎日4時）。
+      #
+      # 削除するのは expires_at を過ぎた行だけで、「使用済み」というだけの行は消さない。
+      # 使用済みの行は再利用検知が「このトークンは既に使われた」と判断する証拠であり、
+      # 早く消すと盗まれたトークンが使われても全セッションの失効が発動しなくなる。
+      cron: "0 0 4 * * *"
+
 springdoc:
   # 公開するか否か（swagger-ui.enabled / api-docs.enabled）はプロファイルごとに決める。
   api-docs:
