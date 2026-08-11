@@ -105,12 +105,16 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
+    // loadMore() に catch が無く、取得に失敗すると未処理の rejection になる。#89 で対応する。
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     loadMore()
   }, [feed, loadMore])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
+        // 同上。#89 で対応する。
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         if (entries[0].isIntersecting) loadMore()
       },
       { threshold: 0.1 },

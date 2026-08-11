@@ -4,7 +4,8 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { chromium, request, type BrowserContext, type Page } from '@playwright/test'
 import { playAudit } from 'playwright-lighthouse'
-import type { Result as LighthouseResult } from 'lighthouse/types/lhr/lhr'
+// lighthouse の型はデフォルトエクスポート。名前付きでは取り出せない
+import type LighthouseResult from 'lighthouse/types/lhr/lhr'
 import { E2E_PASSWORD, type SeedUser } from '../../e2e/fixtures/testData'
 
 /** Lighthouse がアタッチするCDPポート。他のChromeと衝突する場合は環境変数で変える。 */

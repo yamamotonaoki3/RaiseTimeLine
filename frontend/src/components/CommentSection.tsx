@@ -14,6 +14,8 @@ export default function CommentSection({ postId, currentUserId, onCommentAdded }
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    // 取得に失敗したときの表示が無く、未処理の rejection になる。#89 で対応する。
+    // eslint-disable-next-line @typescript-eslint/no-floating-promises
     getComments(postId).then(setComments)
   }, [postId])
 
