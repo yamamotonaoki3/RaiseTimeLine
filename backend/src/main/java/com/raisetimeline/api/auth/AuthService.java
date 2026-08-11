@@ -1,6 +1,7 @@
 package com.raisetimeline.api.auth;
 
 import com.raisetimeline.api.auth.refreshtoken.RefreshTokenService;
+import com.raisetimeline.api.auth.refreshtoken.RotationResult;
 import com.raisetimeline.api.exception.DuplicateDisplayNameException;
 import com.raisetimeline.api.exception.DuplicateEmailException;
 import com.raisetimeline.api.exception.DuplicateUsernameException;
@@ -75,15 +76,21 @@ public class AuthService {
         return new TokenPair(response, refreshToken);
     }
 
+    /**
+     * リフレッシュトークンを使ってセッションを更新する。
+     *
+     * <p>トークンのローテーションと再利用の判定は {@link RefreshTokenService#rotate(String)} が担う。
+     * 猶予期間内の再提示（複数タブの同時アクセス）では新しいトークンは発行されず、
+     * 既に発行済みのものがそのまま返る。アクセストークンはリクエストごとに発行してよい。
+     */
     public RefreshResult refreshSession(String refreshToken) {
-        User user = refreshTokenService.validate(refreshToken);
-        refreshTokenService.delete(refreshToken);
-        String newRefreshToken = refreshTokenService.create(user.getId());
+        RotationResult rotation = refreshTokenService.rotate(refreshToken);
+        User user = rotation.user();
         String newAccessToken = jwtUtil.generateAccessToken(user.getEmail());
         RefreshResponse response = new RefreshResponse(
                 newAccessToken, user.getId(), user.getDisplayName(), user.getEmail(),
                 user.getAvatarKey());
-        return new RefreshResult(response, newRefreshToken);
+        return new RefreshResult(response, rotation.refreshToken());
     }
 
     public void logout(String refreshToken) {
