@@ -23,6 +23,15 @@
         WHERE token = #{token} AND used_at IS NULL
     </update>
 
+    <!--
+        有効期限切れの行だけを削除する。
+        used_at が入っているだけの行（＝使用済みだが期限内）は残す。
+        再利用検知がその行を証拠として使うため、消すと盗用を検知できなくなる。
+    -->
+    <delete id="deleteExpired">
+        DELETE FROM refresh_tokens WHERE expires_at &lt; #{now}
+    </delete>
+
     <delete id="deleteByToken">
         DELETE FROM refresh_tokens WHERE token = #{token}
     </delete>

@@ -28,6 +28,14 @@ public class RefreshTokenRepository {
         return refreshTokenMapper.markUsed(token, replacedBy, usedAt);
     }
 
+    /**
+     * 有効期限が切れた行を削除し、削除件数を返す。
+     * 使用済みでも期限内の行は残す（再利用検知の証拠になるため）。
+     */
+    public int deleteExpired(LocalDateTime now) {
+        return refreshTokenMapper.deleteExpired(now);
+    }
+
     public void deleteByToken(String token) {
         refreshTokenMapper.deleteByToken(token);
     }

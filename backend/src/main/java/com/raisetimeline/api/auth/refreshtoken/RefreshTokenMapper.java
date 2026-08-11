@@ -25,6 +25,18 @@ public interface RefreshTokenMapper {
             @Param("replacedBy") String replacedBy,
             @Param("usedAt") LocalDateTime usedAt);
 
+    /**
+     * 有効期限が切れた行を削除する。
+     *
+     * <p><b>使用済み（used_at が入っている）というだけの行は消さない。</b>
+     * 使用済みの行は、再利用検知が「このトークンは既に使われた」と判断するための証拠であり、
+     * 早く消すと盗まれたトークンが使われても「存在しないトークン」として扱われ、
+     * 全セッションの失効が発動しなくなる。
+     *
+     * @return 削除した行数
+     */
+    int deleteExpired(@Param("now") LocalDateTime now);
+
     void deleteByToken(String token);
 
     void deleteByUserId(Long userId);
