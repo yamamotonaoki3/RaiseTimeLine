@@ -1,7 +1,9 @@
-import { useEffect, useState } from 'react'
+import axios from 'axios'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { type Post, deletePost, getPostById, updatePost } from '../api/posts'
 import CommentSection from '../components/CommentSection'
+import ErrorMessage from '../components/ErrorMessage'
 import PostCard from '../components/PostCard'
 import { useAuth } from '../context/useAuth'
 
@@ -11,13 +13,26 @@ export default function PostDetailPage() {
   const { user } = useAuth()
   const [post, setPost] = useState<Post | null>(null)
   const [notFound, setNotFound] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const loadPost = useCallback(async () => {
+    if (!id) return
+    setNotFound(false)
+    setError(null)
+    try {
+      setPost(await getPostById(Number(id)))
+    } catch (e) {
+      if (axios.isAxiosError(e) && e.response?.status === 404) {
+        setNotFound(true)
+      } else {
+        setError('投稿の取得に失敗しました。')
+      }
+    }
+  }, [id])
 
   useEffect(() => {
-    if (!id) return
-    getPostById(Number(id))
-      .then(setPost)
-      .catch(() => setNotFound(true))
-  }, [id])
+    void loadPost()
+  }, [loadPost])
 
   const handleUpdate = async (postId: number, content: string, image?: File, removeImage?: boolean) => {
     const updated = await updatePost(postId, content, image, removeImage)
@@ -47,7 +62,9 @@ export default function PostDetailPage() {
 
           {notFound && <p className="timeline-status">投稿が見つかりません。</p>}
 
-          {!notFound && !post && <p className="timeline-status">読み込み中...</p>}
+          {error && <ErrorMessage message={error} onRetry={loadPost} />}
+
+          {!notFound && !error && !post && <p className="timeline-status">読み込み中...</p>}
 
           {post && (
             <>

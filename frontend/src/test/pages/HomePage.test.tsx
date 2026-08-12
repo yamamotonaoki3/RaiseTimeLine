@@ -211,4 +211,46 @@ describe('HomePage', () => {
       expect(screen.getByRole('button', { name: '全体' })).toHaveClass('active')
     })
   })
+
+  // --- 取得失敗時のエラー表示・再試行（#89） ---
+
+  it('投稿取得に失敗 → エラーメッセージが表示され、空メッセージは出ない', async () => {
+    vi.mocked(getPosts).mockRejectedValueOnce(new Error('network error'))
+    renderHomePage()
+
+    await waitFor(() => {
+      expect(screen.getByText('投稿の取得に失敗しました。')).toBeInTheDocument()
+      expect(
+        screen.queryByText('フォロー中のユーザーの投稿がありません。誰かをフォローしてみましょう！'),
+      ).not.toBeInTheDocument()
+    })
+  })
+
+  it('取得失敗後に再試行 → 成功すればエラーが消え投稿が表示される', async () => {
+    vi.mocked(getPosts).mockRejectedValueOnce(new Error('network error'))
+    vi.mocked(getPosts).mockResolvedValueOnce([
+      {
+        id: 1,
+        userId: 2,
+        displayName: '投稿者',
+        avatarUrl: null,
+        content: '再試行後の投稿',
+        imageUrl: null,
+        createdAt: '2026-01-01T00:00:00',
+        updatedAt: '2026-01-01T00:00:00',
+        likeCount: 0,
+        likedByMe: false,
+        commentCount: 0,
+      },
+    ])
+    renderHomePage()
+    await waitFor(() => expect(screen.getByText('投稿の取得に失敗しました。')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: '再試行' }))
+
+    await waitFor(() => {
+      expect(screen.queryByText('投稿の取得に失敗しました。')).not.toBeInTheDocument()
+      expect(screen.getByText('再試行後の投稿')).toBeInTheDocument()
+    })
+  })
 })

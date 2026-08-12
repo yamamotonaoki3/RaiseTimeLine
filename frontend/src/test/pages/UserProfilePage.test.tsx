@@ -88,7 +88,10 @@ describe('UserProfilePage', () => {
   })
 
   it('ユーザーが存在しない（無効クラス）→ 「ユーザーが見つかりません」が表示される', async () => {
-    vi.mocked(getUserProfile).mockRejectedValue(new Error('not found'))
+    vi.mocked(getUserProfile).mockRejectedValue({
+      isAxiosError: true,
+      response: { status: 404 },
+    })
 
     renderUserProfilePage('999')
 

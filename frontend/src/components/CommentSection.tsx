@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { Comment } from '../api/comments'
 import { createComment, deleteComment, getComments } from '../api/comments'
+import ErrorMessage from './ErrorMessage'
 
 interface Props {
   postId: number
@@ -12,12 +13,21 @@ export default function CommentSection({ postId, currentUserId, onCommentAdded }
   const [comments, setComments] = useState<Comment[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const loadComments = useCallback(async () => {
+    try {
+      const fetched = await getComments(postId)
+      setComments(fetched)
+      setError(null)
+    } catch {
+      setError('コメントの取得に失敗しました。')
+    }
+  }, [postId])
 
   useEffect(() => {
-    // 取得に失敗したときの表示が無く、未処理の rejection になる。#89 で対応する。
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    getComments(postId).then(setComments)
-  }, [postId])
+    void loadComments()
+  }, [loadComments])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,6 +50,7 @@ export default function CommentSection({ postId, currentUserId, onCommentAdded }
 
   return (
     <div className="comment-section">
+      {error && <ErrorMessage message={error} onRetry={loadComments} />}
       <ul className="comment-list">
         {comments.map((c) => (
           <li key={c.id} className="comment-item" data-testid="comment-item">
