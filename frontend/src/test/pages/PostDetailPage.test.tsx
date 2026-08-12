@@ -65,7 +65,10 @@ describe('PostDetailPage', () => {
   })
 
   it('投稿が存在しない（無効クラス）→ 「投稿が見つかりません」が表示される', async () => {
-    vi.mocked(getPostById).mockRejectedValue(new Error('not found'))
+    vi.mocked(getPostById).mockRejectedValue({
+      isAxiosError: true,
+      response: { status: 404 },
+    })
 
     renderPostDetailPage('999')
 

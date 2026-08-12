@@ -11,7 +11,7 @@ vi.mock('../../api/comments', () => ({
   deleteComment: vi.fn().mockResolvedValue(undefined),
 }))
 
-import { createComment, deleteComment } from '../../api/comments'
+import { createComment, deleteComment, getComments } from '../../api/comments'
 
 describe('CommentSection', () => {
   // --- 初期表示 ---
@@ -72,5 +72,30 @@ describe('CommentSection', () => {
     await waitFor(() => expect(screen.getByText('自分のコメント')).toBeInTheDocument())
 
     expect(screen.getByRole('button', { name: '送信' })).toBeDisabled()
+  })
+
+  // --- 取得失敗時のエラー表示・再試行（#89） ---
+
+  it('コメント取得に失敗 → エラーメッセージが表示され、一覧は表示されない', async () => {
+    vi.mocked(getComments).mockRejectedValueOnce(new Error('network error'))
+    render(<CommentSection postId={1} currentUserId={1} />)
+
+    await waitFor(() => {
+      expect(screen.getByText('コメントの取得に失敗しました。')).toBeInTheDocument()
+      expect(screen.queryByText('自分のコメント')).not.toBeInTheDocument()
+    })
+  })
+
+  it('取得失敗後に再試行 → 成功すればエラーが消え一覧が表示される', async () => {
+    vi.mocked(getComments).mockRejectedValueOnce(new Error('network error'))
+    render(<CommentSection postId={1} currentUserId={1} />)
+    await waitFor(() => expect(screen.getByText('コメントの取得に失敗しました。')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: '再試行' }))
+
+    await waitFor(() => {
+      expect(screen.queryByText('コメントの取得に失敗しました。')).not.toBeInTheDocument()
+      expect(screen.getByText('自分のコメント')).toBeInTheDocument()
+    })
   })
 })

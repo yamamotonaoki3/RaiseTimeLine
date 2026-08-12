@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import axios from 'axios'
+import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import type { Post } from '../api/posts'
 import { deletePost, updatePost } from '../api/posts'
@@ -10,6 +11,7 @@ import {
   unfollowUser,
   updateUserProfile,
 } from '../api/users'
+import ErrorMessage from '../components/ErrorMessage'
 import PostCard from '../components/PostCard'
 import ProfileEditModal from '../components/ProfileEditModal'
 import { useAuth } from '../context/useAuth'
@@ -22,17 +24,30 @@ export default function UserProfilePage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [showEdit, setShowEdit] = useState(false)
   const [notFound, setNotFound] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const userId = Number(id)
   const isMe = user?.userId === userId
 
-  useEffect(() => {
+  const loadProfile = useCallback(async () => {
     if (!id) return
-    getUserProfile(userId)
-      .then(setProfile)
-      .catch(() => setNotFound(true))
-    getUserPosts(userId).then(setPosts).catch(() => {})
+    setNotFound(false)
+    setError(null)
+    try {
+      setProfile(await getUserProfile(userId))
+    } catch (e) {
+      if (axios.isAxiosError(e) && e.response?.status === 404) {
+        setNotFound(true)
+      } else {
+        setError('プロフィールの取得に失敗しました。')
+      }
+    }
   }, [id, userId])
+
+  useEffect(() => {
+    void loadProfile()
+    getUserPosts(userId).then(setPosts).catch(() => {})
+  }, [id, userId, loadProfile])
 
   const handleFollow = async () => {
     if (!profile) return
@@ -71,6 +86,14 @@ export default function UserProfilePage() {
     return (
       <div className="container">
         <p className="empty-msg">ユーザーが見つかりません。</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container">
+        <ErrorMessage message={error} onRetry={loadProfile} />
       </div>
     )
   }

@@ -12,6 +12,7 @@ import {
 import type { UserProfile } from '../api/users'
 import { getUserProfile, updateUserProfile } from '../api/users'
 import CreatePostModal from '../components/CreatePostModal'
+import ErrorMessage from '../components/ErrorMessage'
 import PostCard from '../components/PostCard'
 import ProfileEditModal from '../components/ProfileEditModal'
 import { useAuth } from '../context/useAuth'
@@ -24,6 +25,7 @@ export default function HomePage() {
   const [posts, setPosts] = useState<Post[]>([])
   const [hasMore, setHasMore] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [newCount, setNewCount] = useState(0)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
@@ -60,6 +62,7 @@ export default function HomePage() {
       // ここで setPosts すると新しい表示が古いフィードのデータで上書きされてしまう。
       if (feedRef.current !== requestedFeed) return
 
+      setError(null)
       if (fetched.length === 0) {
         hasMoreRef.current = false
         setHasMore(false)
@@ -76,6 +79,10 @@ export default function HomePage() {
       if (fetched.length < 20) {
         hasMoreRef.current = false
         setHasMore(false)
+      }
+    } catch {
+      if (feedRef.current === requestedFeed) {
+        setError('投稿の取得に失敗しました。')
       }
     } finally {
       // 自分が古いフィードのリクエストだった場合、既に switchFeed() が
@@ -105,17 +112,13 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => {
-    // loadMore() に catch が無く、取得に失敗すると未処理の rejection になる。#89 で対応する。
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    loadMore()
+    void loadMore()
   }, [feed, loadMore])
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        // 同上。#89 で対応する。
-        // eslint-disable-next-line @typescript-eslint/no-floating-promises
-        if (entries[0].isIntersecting) loadMore()
+        if (entries[0].isIntersecting) void loadMore()
       },
       { threshold: 0.1 },
     )
@@ -246,11 +249,21 @@ export default function HomePage() {
               />
             ))}
             <div ref={sentinelRef} className="sentinel" />
-            {loading && <p className="timeline-status">読み込み中...</p>}
-            {!hasMore && posts.length > 0 && (
+            {error && (
+              <ErrorMessage
+                message={error}
+                onRetry={() => {
+                  hasMoreRef.current = true
+                  setHasMore(true)
+                  void loadMore()
+                }}
+              />
+            )}
+            {!error && loading && <p className="timeline-status">読み込み中...</p>}
+            {!error && !hasMore && posts.length > 0 && (
               <p className="timeline-status">これ以上の投稿はありません</p>
             )}
-            {!loading && posts.length === 0 && (
+            {!error && !loading && posts.length === 0 && (
               <p className="timeline-status">{emptyMessage}</p>
             )}
           </div>
