@@ -1,0 +1,238 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend-lint:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/package.json
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  frontend-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/package.json
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+      - run: npm test
+
+  backend-checkstyle:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: gradle
+
+      - run: chmod +x gradlew
+      - run: ./gradlew checkstyleMain --no-daemon
+
+  backend-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: gradle
+
+      - run: chmod +x gradlew
+      - run: ./gradlew test --no-daemon
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: gradle
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/package.json
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # E2Eが必要とするDBパスワード・JWT署名鍵・MinIO認証情報は、このジョブ内でのみ使う
+      # 使い捨ての値。外部の既存システムへの接続情報ではないため、job内でその場生成する
+      # （Repository Secretsへの事前登録は不要と判断。詳細は
+      # C:\Users\3219b\.claude\plans\89-lucky-quasar.md の「学習で確定した設計判断」を参照）。
+      - name: Generate ephemeral E2E credentials
+        run: |
+          set -euo pipefail
+          db_password=$(openssl rand -hex 24)
+          minio_password=$(openssl rand -hex 24)
+          jwt_secret=$(openssl rand -hex 32)
+
+          echo "::add-mask::$db_password"
+          echo "::add-mask::$minio_password"
+          echo "::add-mask::$jwt_secret"
+
+          {
+            echo "POSTGRES_DB=raisetimeline"
+            echo "POSTGRES_USER=raisetimeline_app"
+            echo "POSTGRES_PASSWORD=$db_password"
+            echo "DB_USERNAME=raisetimeline_app"
+            echo "DB_PASSWORD=$db_password"
+            echo "MINIO_ROOT_USER=raisetimeline_minio"
+            echo "MINIO_ROOT_PASSWORD=$minio_password"
+            echo "AWS_S3_ACCESS_KEY=raisetimeline_minio"
+            echo "AWS_S3_SECRET_KEY=$minio_password"
+            echo "JWT_SECRET=$jwt_secret"
+          } >> "$GITHUB_ENV"
+
+      - name: Write backend/.env
+        run: |
+          {
+            echo "POSTGRES_DB=$POSTGRES_DB"
+            echo "POSTGRES_USER=$POSTGRES_USER"
+            echo "POSTGRES_PASSWORD=$POSTGRES_PASSWORD"
+            echo "DB_USERNAME=$DB_USERNAME"
+            echo "DB_PASSWORD=$DB_PASSWORD"
+            echo "JWT_SECRET=$JWT_SECRET"
+            echo "MINIO_ROOT_USER=$MINIO_ROOT_USER"
+            echo "MINIO_ROOT_PASSWORD=$MINIO_ROOT_PASSWORD"
+            echo "AWS_S3_ACCESS_KEY=$AWS_S3_ACCESS_KEY"
+            echo "AWS_S3_SECRET_KEY=$AWS_S3_SECRET_KEY"
+          } > backend/.env
+
+      - name: Start DB and MinIO
+        run: docker compose -f backend/docker-compose.yml up -d
+
+      # docker compose up -d の成功はコンテナの起動開始を示すだけで、
+      # PostgreSQL/MinIOが実際に要求を受け付けられる状態とは限らないため、リトライで確認する。
+      - name: Wait for PostgreSQL
+        run: |
+          for attempt in $(seq 1 20); do
+            if docker compose -f backend/docker-compose.yml exec -T db pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"; then
+              echo "PostgreSQL is ready on attempt ${attempt}."
+              exit 0
+            fi
+            echo "Attempt ${attempt}: PostgreSQL is not ready yet."
+            sleep 2
+          done
+          echo "PostgreSQL did not become ready in time."
+          exit 1
+
+      - name: Wait for MinIO
+        run: |
+          for attempt in $(seq 1 20); do
+            if curl -fsS http://localhost:9000/minio/health/ready; then
+              echo "MinIO is ready on attempt ${attempt}."
+              exit 0
+            fi
+            echo "Attempt ${attempt}: MinIO is not ready yet."
+            sleep 2
+          done
+          echo "MinIO did not become ready in time."
+          exit 1
+
+      - name: Warm up backend build
+        working-directory: backend
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon compileJava
+
+      - name: Start backend
+        working-directory: backend
+        run: |
+          chmod +x gradlew
+          nohup ./gradlew bootRun --no-daemon > backend.log 2>&1 &
+          echo $! > backend.pid
+
+      # actuatorが未導入のため、local プロファイルで有効な /v3/api-docs への
+      # HTTPリトライを起動完了の確認に使う。
+      - name: Wait for backend
+        run: |
+          for attempt in $(seq 1 60); do
+            if curl -fsS http://localhost:8080/v3/api-docs > /dev/null; then
+              echo "Backend is ready on attempt ${attempt}."
+              exit 0
+            fi
+            echo "Attempt ${attempt}: backend is not ready yet."
+            sleep 3
+          done
+          echo "Backend did not become ready in time."
+          exit 1
+
+      - name: Install Playwright (chromium)
+        working-directory: frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Run E2E tests
+        working-directory: frontend
+        env:
+          CI: "true"
+        run: npm run e2e
+
+      - name: Upload backend log (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-log
+          path: backend/backend.log
+          retention-days: 3
+
+      - name: Upload Playwright report (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 3
+
+      - name: Stop backend
+        if: always()
+        run: |
+          if [ -f backend/backend.pid ]; then
+            kill "$(cat backend/backend.pid)" || true
+          fi
+
+      - name: Stop DB and MinIO
+        if: always()
+        run: docker compose -f backend/docker-compose.yml down --volumes
