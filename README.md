@@ -135,3 +135,13 @@ cd backend
 cd frontend
 npm test
 ```
+
+## CI
+
+`push`（main）・Pull Request のたびに GitHub Actions で以下を自動実行する（`.github/workflows/ci.yml`）。
+
+- フロントエンド: Lint（oxlint + eslint）・ビルド（型チェック）・単体テスト（Vitest）
+- バックエンド: 静的解析（Checkstyle）・単体結合テスト（JUnit 5）
+- E2E: Playwright（実DB・実MinIO・実バックエンドを使う一気通貫テスト）
+
+Markdown・`docs/` 配下のみの変更では CI をスキップする（`paths-ignore`）。
