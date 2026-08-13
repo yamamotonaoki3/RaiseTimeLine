@@ -19,6 +19,9 @@ dist-ssr
 # ブラウザパフォーマンステスト（Lighthouse）の計測結果
 perf-browser/results
 
+# CIで生成するVitestのHTMLレポート（アップロード対象。ローカルでも同じコマンドで再生成できる）
+html
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
