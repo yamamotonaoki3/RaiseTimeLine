@@ -203,7 +203,6 @@ jobs:
         run: |
           chmod +x gradlew
           nohup ./gradlew bootRun --no-daemon > backend.log 2>&1 &
-          echo $! > backend.pid
 
       # actuatorが未導入のため、local プロファイルで有効な /v3/api-docs への
       # HTTPリトライを起動完了の確認に使う。
@@ -247,14 +246,3 @@ jobs:
           name: playwright-report
           path: frontend/playwright-report/
           retention-days: 3
-
-      - name: Stop backend
-        if: always()
-        run: |
-          if [ -f backend/backend.pid ]; then
-            kill "$(cat backend/backend.pid)" || true
-          fi
-
-      - name: Stop DB and MinIO
-        if: always()
-        run: docker compose -f backend/docker-compose.yml down --volumes
