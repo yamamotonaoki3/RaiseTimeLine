@@ -1,0 +1,11 @@
+build/
+bin/
+.gradle/
+uploads/
+perf/
+.env
+.env.*
+!.env.example
+*.log
+Dockerfile
+.dockerignore

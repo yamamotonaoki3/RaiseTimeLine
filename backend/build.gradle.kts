@@ -23,6 +23,7 @@ dependencies {
     implementation("software.amazon.awssdk:s3")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-security")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.mybatis:mybatis:3.5.19")
     implementation("org.mybatis:mybatis-spring:4.0.0")
