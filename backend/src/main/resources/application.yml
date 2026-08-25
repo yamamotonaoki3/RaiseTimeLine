@@ -30,6 +30,17 @@ mybatis:
     map-underscore-to-camel-case: true
   mapper-locations: classpath:mapper/**/*.xml
 
+management:
+  # ALBのヘルスチェックが叩くエンドポイントだけを公開する。
+  # デフォルトの/actuator一覧やbeans等の詳細情報は攻撃の手がかりになるため晒さない。
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 jwt:
   # 署名鍵（jwt.secret）は環境依存の秘密情報のため、各プロファイル側で定義する。
   access-expiration: 900000
