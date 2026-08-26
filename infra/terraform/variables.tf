@@ -55,6 +55,18 @@ variable "enable_interface_endpoints" {
   default     = false
 }
 
+variable "rds_instance_class" {
+  type        = string
+  description = "RDSインスタンスクラス"
+  default     = "db.t4g.micro"
+}
+
+variable "rds_allocated_storage" {
+  type        = number
+  description = "RDSの割り当てストレージ容量（GB）"
+  default     = 20
+}
+
 variable "tags" {
   type        = map(string)
   description = "全リソースへ追加する共通タグ"
