@@ -8,6 +8,9 @@ private_subnet_cidrs = ["10.0.10.0/24", "10.0.11.0/24"]
 # Interface endpointは時間課金が発生します。必要になるまでfalseのままにします。
 enable_interface_endpoints = false
 
+rds_instance_class    = "db.t4g.micro"
+rds_allocated_storage = 20
+
 tags = {
   Environment = "dev"
 }

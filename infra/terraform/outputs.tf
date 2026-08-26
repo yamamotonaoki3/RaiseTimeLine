@@ -53,3 +53,13 @@ output "ecr_repository_url" {
   value       = aws_ecr_repository.backend.repository_url
 }
 
+output "rds_endpoint" {
+  description = "ECSからDB接続に使うRDSエンドポイント（ホスト:ポート）"
+  value       = aws_db_instance.main.endpoint
+}
+
+output "rds_master_user_secret_arn" {
+  description = "RDSが自動生成したマスターパスワードのSecrets Manager ARN"
+  value       = aws_db_instance.main.master_user_secret[0].secret_arn
+}
+
