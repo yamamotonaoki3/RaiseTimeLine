@@ -48,3 +48,8 @@ output "interface_endpoint_ids" {
   value       = { for service, endpoint in aws_vpc_endpoint.interface : service => endpoint.id }
 }
 
+output "ecr_repository_url" {
+  description = "バックエンドDockerイメージをpushするECRリポジトリURL"
+  value       = aws_ecr_repository.backend.repository_url
+}
+
