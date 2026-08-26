@@ -63,3 +63,13 @@ output "rds_master_user_secret_arn" {
   value       = aws_db_instance.main.master_user_secret[0].secret_arn
 }
 
+output "ecs_cluster_name" {
+  description = "ECSクラスタ名"
+  value       = aws_ecs_cluster.main.name
+}
+
+output "ecs_service_name" {
+  description = "ECSサービス名"
+  value       = aws_ecs_service.backend.name
+}
+

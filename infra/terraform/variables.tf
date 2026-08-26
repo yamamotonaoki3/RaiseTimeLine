@@ -51,8 +51,8 @@ variable "app_port" {
 
 variable "enable_interface_endpoints" {
   type        = bool
-  description = "ECR、CloudWatch Logs、Secrets Managerの有料Interface endpointを作成するか"
-  default     = false
+  description = "ECR、CloudWatch Logs、Secrets Managerの有料Interface endpointを作成するか。ECS Fargateタスクがprivate subnetからこれらに到達する唯一の経路（NAT Gatewayは使わない方針）のため、既定でtrueにしている"
+  default     = true
 }
 
 variable "rds_instance_class" {
@@ -65,6 +65,43 @@ variable "rds_allocated_storage" {
   type        = number
   description = "RDSの割り当てストレージ容量（GB）"
   default     = 20
+}
+
+variable "ecs_task_cpu" {
+  type        = number
+  description = "ECSタスクのCPUユニット（Fargateの最小構成）"
+  default     = 256
+}
+
+variable "ecs_task_memory" {
+  type        = number
+  description = "ECSタスクのメモリ（MiB）"
+  default     = 512
+}
+
+variable "ecs_desired_count" {
+  type        = number
+  description = "ECSサービスの起動タスク数"
+  default     = 1
+}
+
+variable "backend_image_tag" {
+  type        = string
+  description = "ECRにpushするバックエンドイメージのタグ。デプロイのたびに更新する"
+  default     = "initial"
+}
+
+variable "cors_allowed_origins" {
+  type        = string
+  description = "バックエンドが許可するCORSオリジン（フロントのCloudFrontドメイン）。S3+CloudFront構築後に確定するまでは暫定値を使う"
+}
+
+# ローカルDocker検証時にAWS CLIで手動作成した既存バケットで、このTerraformコードでは管理していない。
+# バケット自体のTerraform化（aws_s3_bucketリソース化・importの実施）はS3+CloudFront追加のIssueで行う。
+variable "post_images_bucket_name" {
+  type        = string
+  description = "投稿・アバター画像を保存する既存S3バケット名（Terraform管理外）"
+  default     = "raisetimeline-post-images"
 }
 
 variable "tags" {
