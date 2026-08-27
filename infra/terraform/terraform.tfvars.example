@@ -5,11 +5,19 @@ vpc_cidr             = "10.0.0.0/16"
 public_subnet_cidrs  = ["10.0.0.0/24", "10.0.1.0/24"]
 private_subnet_cidrs = ["10.0.10.0/24", "10.0.11.0/24"]
 
-# Interface endpointは時間課金が発生します。必要になるまでfalseのままにします。
-enable_interface_endpoints = false
+# ECS FargateタスクがECR pull・CloudWatch Logs・Secrets Manager読み取りをNAT Gatewayなしで行うために必要。
+enable_interface_endpoints = true
 
 rds_instance_class    = "db.t4g.micro"
 rds_allocated_storage = 20
+
+ecs_task_cpu      = 256
+ecs_task_memory   = 512
+ecs_desired_count = 1
+backend_image_tag = "initial"
+
+# S3+CloudFront構築後に実際のCloudFrontドメインへ更新すること。
+cors_allowed_origins = "https://placeholder.example"
 
 tags = {
   Environment = "dev"
