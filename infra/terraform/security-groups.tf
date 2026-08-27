@@ -1,6 +1,12 @@
+# CloudFrontのオリジンアクセス用グローバルIPレンジ。ALBへの直接アクセスを塞ぎ、
+# CloudFront経由のアクセスのみに限定するために使う。
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
 resource "aws_security_group" "alb" {
   name        = "${var.project_name}-alb-sg"
-  description = "Allow HTTP from the internet to the ALB"
+  description = "Allow HTTP from CloudFront only"
   vpc_id      = aws_vpc.main.id
 
   tags = merge(local.common_tags, {
@@ -10,8 +16,8 @@ resource "aws_security_group" "alb" {
 
 resource "aws_vpc_security_group_ingress_rule" "alb_http" {
   security_group_id = aws_security_group.alb.id
-  description       = "HTTP from internet"
-  cidr_ipv4         = "0.0.0.0/0"
+  description       = "HTTP from CloudFront"
+  prefix_list_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
   from_port         = 80
   to_port           = 80
   ip_protocol       = "tcp"

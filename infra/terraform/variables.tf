@@ -91,13 +91,8 @@ variable "backend_image_tag" {
   default     = "initial"
 }
 
-variable "cors_allowed_origins" {
-  type        = string
-  description = "バックエンドが許可するCORSオリジン（フロントのCloudFrontドメイン）。S3+CloudFront構築後に確定するまでは暫定値を使う"
-}
-
 # ローカルDocker検証時にAWS CLIで手動作成した既存バケットで、このTerraformコードでは管理していない。
-# バケット自体のTerraform化（aws_s3_bucketリソース化・importの実施）はS3+CloudFront追加のIssueで行う。
+# バケット自体のTerraform化（aws_s3_bucketリソース化・importの実施）は別Issueで行う。
 variable "post_images_bucket_name" {
   type        = string
   description = "投稿・アバター画像を保存する既存S3バケット名（Terraform管理外）"
