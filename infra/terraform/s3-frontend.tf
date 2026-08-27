@@ -1,5 +1,10 @@
+# S3バケット名はAWSアカウントをまたいで全世界で一意である必要がある。
+# "raisetimeline-frontend"のような一般的な名前は他アカウントと衝突しうるため、
+# 確実にユニークになるAWSアカウントIDを付与する。
+data "aws_caller_identity" "current" {}
+
 resource "aws_s3_bucket" "frontend" {
-  bucket        = "${var.project_name}-frontend"
+  bucket        = "${var.project_name}-frontend-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
 
   tags = merge(local.common_tags, { Name = "${var.project_name}-frontend" })
