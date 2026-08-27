@@ -78,3 +78,18 @@ output "alb_dns_name" {
   value       = aws_lb.main.dns_name
 }
 
+output "frontend_bucket_name" {
+  description = "フロントエンドのビルド成果物をアップロードするS3バケット名"
+  value       = aws_s3_bucket.frontend.id
+}
+
+output "cloudfront_distribution_id" {
+  description = "デプロイ時のキャッシュ無効化（invalidation）に使うCloudFrontディストリビューションID"
+  value       = aws_cloudfront_distribution.frontend.id
+}
+
+output "cloudfront_domain_name" {
+  description = "フロントエンドの公開URL（CloudFrontドメイン）"
+  value       = aws_cloudfront_distribution.frontend.domain_name
+}
+

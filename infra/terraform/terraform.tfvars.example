@@ -16,9 +16,6 @@ ecs_task_memory   = 512
 ecs_desired_count = 1
 backend_image_tag = "initial"
 
-# S3+CloudFront構築後に実際のCloudFrontドメインへ更新すること。
-cors_allowed_origins = "https://placeholder.example"
-
 tags = {
   Environment = "dev"
 }
