@@ -73,7 +73,14 @@ resource "aws_ecs_service" "backend" {
     assign_public_ip = false
   }
 
-  # ALB未接続。ALB追加のIssueでload_balancerブロックを追記する。
+  load_balancer {
+    target_group_arn = aws_lb_target_group.backend.arn
+    container_name   = "backend"
+    container_port   = var.app_port
+  }
+
+  # ALBのリスナーが受け付け可能になる前にターゲット登録だけ先行して不安定にならないようにする。
+  depends_on = [aws_secretsmanager_secret_version.jwt, aws_lb_listener.http]
 
   tags = local.common_tags
 }

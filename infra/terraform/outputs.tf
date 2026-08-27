@@ -73,3 +73,8 @@ output "ecs_service_name" {
   value       = aws_ecs_service.backend.name
 }
 
+output "alb_dns_name" {
+  description = "ALBのDNS名（アプリへのアクセス先。後続でCloudFrontのオリジンにも使う）"
+  value       = aws_lb.main.dns_name
+}
+
