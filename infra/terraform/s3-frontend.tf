@@ -1,5 +1,12 @@
+# S3バケット名はAWSアカウントをまたいで全世界で一意である必要がある。
+# "raisetimeline-frontend"のような一般的な名前は他アカウントと衝突しうるため、
+# ランダムな文字列を付与して確実にユニークにする（AWSアカウントIDは含めない）。
+resource "random_id" "frontend_bucket_suffix" {
+  byte_length = 4
+}
+
 resource "aws_s3_bucket" "frontend" {
-  bucket        = "${var.project_name}-frontend"
+  bucket        = "${var.project_name}-frontend-${random_id.frontend_bucket_suffix.hex}"
   force_destroy = true
 
   tags = merge(local.common_tags, { Name = "${var.project_name}-frontend" })
