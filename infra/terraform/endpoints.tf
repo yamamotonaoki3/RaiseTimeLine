@@ -16,8 +16,11 @@ resource "aws_vpc_endpoint" "interface" {
   service_name        = "com.amazonaws.${var.aws_region}.${each.value}"
   vpc_endpoint_type   = "Interface"
   private_dns_enabled = true
-  subnet_ids          = [for az in local.availability_zones : aws_subnet.private[az].id]
-  security_group_ids  = [aws_security_group.vpc_endpoints.id]
+  # 学習目的でコスト優先のためシングルAZ（RDS・ECSと同じ方針）。
+  # AZが1つでも、private_dns_enabledによりVPC内のどのAZからも到達できる
+  # （そのAZが落ちた場合のみ利用不可になる、というトレードオフ）。
+  subnet_ids         = [aws_subnet.private[local.availability_zones[0]].id]
+  security_group_ids = [aws_security_group.vpc_endpoints.id]
 
   tags = merge(local.common_tags, {
     Name    = "${var.project_name}-${replace(each.value, ".", "-")}-endpoint"
