@@ -52,6 +52,26 @@ terraform apply plan.tfplan
 ./infra/scripts/deploy-frontend.sh
 ```
 
+## バックエンドのCI/CD（ECRへの自動push）
+
+`.github/workflows/deploy-backend.yml` が、`main` への push（`backend/**` に変更がある場合のみ）を
+トリガーに、Dockerイメージをビルドして自動でECRへpushする。認証は静的なアクセスキーではなく、
+OIDC連携（`github-oidc.tf`）でAWSの一時的な認証情報を取得する方式にしている。
+
+**ECS側への反映（デプロイ）は自動化していない。** ワークフロー実行後、GitHub ActionsのStep Summaryに
+新しいイメージタグ（Gitコミットハッシュ短縮形）が表示されるので、それを
+`infra/terraform/terraform.tfvars` の `backend_image_tag` に手動で反映し、`terraform apply` する。
+自動化せず手動にしているのは、再現性を保ちミスを減らすため。
+
+### 初回セットアップ（`terraform apply` 後に1回だけ）
+
+```bash
+terraform output -raw github_actions_role_arn
+```
+
+で得られる値を、GitHubリポジトリの Settings → Secrets and variables → Actions に、
+`AWS_ECR_PUSH_ROLE_ARN` という名前のRepository secretとして登録する。
+
 ## 注意事項
 
 - `terraform.tfvars` / `*.tfstate` / `*.tfplan` / `.terraform/` はコミットしない（`.gitignore`済み）

@@ -93,3 +93,8 @@ output "cloudfront_domain_name" {
   value       = aws_cloudfront_distribution.frontend.domain_name
 }
 
+output "github_actions_role_arn" {
+  description = "GitHub ActionsのワークフローがAssumeするIAMロールARN。GitHub Secrets（AWS_ECR_PUSH_ROLE_ARN）に登録する"
+  value       = aws_iam_role.github_actions_ecr_push.arn
+}
+
