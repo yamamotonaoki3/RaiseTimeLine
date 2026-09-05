@@ -9,7 +9,7 @@ EC2を使わずに構築する。全体構成は [docs/details/system-architectu
 
 VPC・サブネット・セキュリティグループ・VPCエンドポイント（`network.tf` / `security-groups.tf` / `endpoints.tf`）に加え、
 ECR・RDS・ECS Fargate・ALB・S3+CloudFront（`ecr.tf` / `rds.tf` / `ecs.tf` / `iam.tf` / `secrets.tf` / `alb.tf` /
-`s3-frontend.tf` / `cloudfront.tf`）まで一通り揃っている。
+`s3-frontend.tf` / `cloudfront.tf` / `s3-images.tf`）まで一通り揃っている。
 
 現在の設計判断（学習目的でコスト優先）:
 
@@ -19,8 +19,9 @@ ECR・RDS・ECS Fargate・ALB・S3+CloudFront（`ecr.tf` / `rds.tf` / `ecs.tf` /
 - ALBはHTTPリスナーのみ。独自ドメイン・ACM証明書が未取得のため、HTTPS化は別途ドメイン取得後の別Issueで対応する予定
   （ブラウザとの通信は常にCloudFront経由のHTTPSであり、ALBへの直接アクセスは`X-Origin-Verify`ヘッダーで遮断しているため、
   現状でもMixed Content等の問題は発生しない）
-- 画像ストレージ用S3バケット（`var.post_images_bucket_name`）は、ローカルDocker検証時に手動作成した既存バケットで
-  **このTerraformコードでは管理していない**。`terraform apply`で作成されず、`terraform destroy`でも削除されない
+- 画像ストレージ用S3バケット（`s3-images.tf`）は、ローカルDocker検証時に手動作成した旧バケット（空だったため）とは
+  別に、`random_id`でユニーク化した新しいバケットとしてTerraform管理下に作成する。旧バケットは管理外のまま残るため、
+  不要になったら手動で削除すること
 
 ## 学習資料との関係
 
@@ -41,6 +42,14 @@ terraform fmt -check
 terraform validate
 terraform plan -out=plan.tfplan
 terraform apply plan.tfplan
+```
+
+## フロントエンドのデプロイ
+
+`terraform apply` 済みであれば、以下でフロントエンドのビルド成果物をS3へアップロードし、CloudFrontのキャッシュを無効化できる。
+
+```bash
+./infra/scripts/deploy-frontend.sh
 ```
 
 ## 注意事項
