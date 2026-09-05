@@ -51,7 +51,7 @@ RaiseTech カリキュラムの受講生・個人が利用する学習用 SNS �
 
 - 認証は メールアドレス＋パスワード のみ（OAuth は対象外）
 - 画像は AWS S3 に保存する
-- インフラは AWS（EC2 + RDS + ALB）を前提とした構成図を整備するが、利用確定は別途判断する
+- インフラは AWS（ECS Fargate + RDS + ALB + S3/CloudFront、EC2レス構成）としてTerraformコードを実装済み（学習目的のため、AWS上への実際の構築は必要な時だけapplyし、使い終えたらdestroyする運用）
 
 ---
 
@@ -248,7 +248,7 @@ ESLint の対象には `src/` だけでなく `e2e/` と `perf-browser/` も含�
 | バックエンド | Checkstyle | 10.21.4 |
 | DB | PostgreSQL | 17 |
 | 画像ストレージ | AWS S3 | — |
-| インフラ | AWS（EC2 + RDS + ALB） | — |
+| インフラ | AWS（ECS Fargate + RDS + ALB + S3/CloudFront） | — |
 | テスト（単体・結合） | JUnit | 5 |
 | テスト（単体） | Vitest / React Testing Library | 4.1.9 |
 | テスト（E2E） | Playwright | 1.62.1 |
