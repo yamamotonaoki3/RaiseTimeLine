@@ -55,7 +55,7 @@ resource "aws_iam_role_policy" "ecs_task_s3" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
-      Resource = "arn:aws:s3:::${var.post_images_bucket_name}/*"
+      Resource = "${aws_s3_bucket.post_images.arn}/*"
     }]
   })
 }

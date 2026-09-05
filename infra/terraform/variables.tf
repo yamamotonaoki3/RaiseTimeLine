@@ -91,14 +91,6 @@ variable "backend_image_tag" {
   default     = "initial"
 }
 
-# ローカルDocker検証時にAWS CLIで手動作成した既存バケットで、このTerraformコードでは管理していない。
-# バケット自体のTerraform化（aws_s3_bucketリソース化・importの実施）は別Issueで行う。
-variable "post_images_bucket_name" {
-  type        = string
-  description = "投稿・アバター画像を保存する既存S3バケット名（Terraform管理外）"
-  default     = "raisetimeline-post-images"
-}
-
 variable "tags" {
   type        = map(string)
   description = "全リソースへ追加する共通タグ"
