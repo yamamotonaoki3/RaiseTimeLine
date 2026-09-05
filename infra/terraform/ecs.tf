@@ -36,7 +36,7 @@ resource "aws_ecs_task_definition" "backend" {
         { name = "DB_URL", value = "jdbc:postgresql://${aws_db_instance.main.endpoint}/raisetimeline" },
         { name = "DB_USERNAME", value = "raisetimeline_app" },
         { name = "CORS_ALLOWED_ORIGINS", value = "https://${aws_cloudfront_distribution.frontend.domain_name}" },
-        { name = "AWS_S3_BUCKET_NAME", value = var.post_images_bucket_name },
+        { name = "AWS_S3_BUCKET_NAME", value = aws_s3_bucket.post_images.id },
         { name = "AWS_S3_REGION", value = var.aws_region },
       ]
       secrets = [
