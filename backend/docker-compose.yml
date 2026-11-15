@@ -26,7 +26,10 @@ services:
   # 別途 minio/mc の初期化コンテナを立てる必要がない。
   # presigned URL方式のため、匿名読み取りの許可は設定しない。
   minio:
-    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    # Docker Hubの削除済みイメージに依存せず、公式固定コミットからビルドする。
+    # ローカル/CI専用。本番AWS S3には影響しない。
+    build:
+      context: ./docker/minio
     container_name: raisetimeline-minio
     # 既定のentrypointは引数を minio サブコマンドとして解釈するため、entrypointごと差し替える
     entrypoint: >
