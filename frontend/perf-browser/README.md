@@ -45,8 +45,9 @@ devサーバ（`vite dev`）はHMR用のコードを含み、モジュールを�
 
 ### ログイン方式（リフレッシュトークンのローテーション対策）
 
-このアプリはリフレッシュトークンを**ローテーション**します（`AuthService.refreshSession` が古いトークンを削除して新しいものを発行する）。
-そのため、ログイン結果をファイルに保存して使い回す一般的な `storageState` の手順は使えません。保存したトークンは最初の1回で失効します。
+このアプリは `RefreshTokenService.rotate` でリフレッシュトークンをローテーションします。
+使用済みの記録を残し、既定30秒の猶予内では置き換え先のトークンを返します。猶予を超えた再利用は
+全リフレッシュトークンを失効させるため、古いCookieを保存したstorageStateの長期使い回しには適しません。
 
 そこで **計測ごとにAPIでログインし、その計測専用のCookieをブラウザに渡します**（E2Eの `e2e/fixtures/auth.ts` と同じ考え方）。
 
@@ -64,7 +65,7 @@ Lighthouseは既定で計測前にCookieやストレージを消去します。�
 
 ### CORSの許可オリジン
 
-バックエンドの許可オリジンは `app.cors.allowed-origins`（`backend/src/main/resources/application.yml`）で設定します。
+バックエンドの許可オリジンは `app.cors.allowed-origins`（`backend/src/main/resources/application-local.yml`（本番は `application-prod.yml`））で設定します。
 開発サーバ（5173）に加え、preview（4183）も許可されている必要があります。
 ここが漏れていると `/api/auth/refresh` が **403** になり、ログイン画面を計測することになります。
 

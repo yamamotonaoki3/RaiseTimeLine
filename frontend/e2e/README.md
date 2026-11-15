@@ -1,7 +1,7 @@
 # E2Eテスト（Playwright）
 
 実ブラウザを操作して、React → Spring Boot → PostgreSQL が一気通貫で動くことを検証するテストです。
-CIには組み込んでおらず、**必要なタイミングで手動実行**する運用とします（`backend/perf` と同じ）。
+ローカルで実行できるほか、`.github/workflows/ci.yml` のe2eジョブでChromiumを実行します。Firefox/Edgeは手動実行です。性能テストとは運用が異なります。
 
 ## なぜE2Eテストが要るのか
 
@@ -9,7 +9,7 @@ CIには組み込んでおらず、**必要なタイミングで手動実行**�
 
 | 層 | ツール | 検証範囲 | モック |
 | --- | --- | --- | --- |
-| バックエンド単体・結合 | JUnit 5 | Controller→Service→Repository | DBは H2 |
+| バックエンド単体・結合 | JUnit（Spring Boot管理） | Controller→Service→Repository | DBは H2 |
 | フロントエンド単体 | Vitest + RTL | 画面のロジック | **MSW でAPIをモック** |
 | パフォーマンス | k6 | APIの速度 | ブラウザなし |
 | **E2E** | **Playwright** | **画面操作〜DB反映まで** | **なし** |
@@ -77,7 +77,7 @@ npx playwright test --debug                    # ステップ実行
 
 ## テストデータ
 
-プロジェクトの CLAUDE.md「テストデータの取り扱い」に従い、**実データ・実在の個人名・
+**実データ・実在の個人名・
 実在しうるメールアドレスは一切使いません**。定義は `fixtures/testData.ts` にあります。
 
 | 項目 | 値 |
@@ -233,7 +233,7 @@ npx playwright show-trace test-results/<...>/trace.zip   # 操作を時系列で
 | `画像が読み込まれませんでした` | 画像は取得できても**デコードに失敗**している可能性がある。まず `fixtures/avatar.png` が正しいPNGか確認する（壊れた画像はChromeでは表示され、Firefoxでは失敗する） |
 | `テストユーザー ... の作成に失敗しました` | バックエンドが起動していない、または起動途中。`.\gradlew.bat bootRun` の完了を待つ |
 | `E2Eテストの接続先が localhost ではありません` | `E2E_BASE_URL` がローカル以外を指している。**意図した設定でないか必ず確認する** |
-| ログイン状態のテストが軒並み落ちる | `e2e/.auth/` が古い可能性。ディレクトリを削除して再実行する |
+| ログイン状態のテストが軒並み落ちる | `fixtures/auth.ts` のテストごとのAPIログイン・シード・Cookie・接続先を確認する。認証状態ファイルを再利用する構成ではない |
 
 ## ディレクトリ構成
 

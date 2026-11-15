@@ -14,7 +14,7 @@ ECR・RDS・ECS Fargate・ALB・S3+CloudFront（`ecr.tf` / `rds.tf` / `ecs.tf` /
 現在の設計判断（学習目的でコスト優先）:
 
 - RDS・VPC Interface Endpointは可用性より低コストを優先し、シングルaz構成にしている。ECS Fargateは
-  `desired_count = 1`（タスクは1つだけ）とすることでコストを抑えている（配置先のサブネットは2AZ分渡しており、
+  `ecs_desired_count` の既定値1（変数で変更可能）とすることでコストを抑えている（配置先のサブネットは2AZ分渡しており、
   どちらのAZにスケジュールされるかはECSが決める）
 - ALBはHTTPリスナーのみ。独自ドメイン・ACM証明書が未取得のため、HTTPS化は別途ドメイン取得後の別Issueで対応する予定
   （ブラウザとの通信は常にCloudFront経由のHTTPSであり、ALBへの直接アクセスは`X-Origin-Verify`ヘッダーで遮断しているため、
@@ -59,7 +59,7 @@ terraform apply plan.tfplan
 OIDC連携（`github-oidc.tf`）でAWSの一時的な認証情報を取得する方式にしている。
 
 **ECS側への反映（デプロイ）は自動化していない。** ワークフロー実行後、GitHub ActionsのStep Summaryに
-新しいイメージタグ（Gitコミットハッシュ短縮形）が表示されるので、それを
+新しいイメージタグ（Gitコミットハッシュ先頭7文字）が表示されるので、それを
 `infra/terraform/terraform.tfvars` の `backend_image_tag` に手動で反映し、`terraform apply` する。
 自動化せず手動にしているのは、再現性を保ちミスを減らすため。
 
