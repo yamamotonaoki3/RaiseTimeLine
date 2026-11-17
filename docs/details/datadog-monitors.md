@@ -10,11 +10,11 @@ Datadog との実連携（Agent導入・APIキー設定）は現時点では行�
 
 ## モニター定義例
 
-### 1. 5xx エラー率上昇アラート
+### 1. 5xx エラー件数上昇アラート
 
 ```json
 {
-  "name": "[RaiseTimeLine] 5xx error rate high",
+  "name": "[RaiseTimeLine] 5xx error count high",
   "type": "log alert",
   "query": "logs(\"service:api @http_status:>=500\").index(\"main\").rollup(\"count\").last(\"5m\") > 10",
   "message": "5xx エラーが5分間で10件を超えました。 @slack-alerts",
@@ -57,3 +57,7 @@ Datadog との実連携（Agent導入・APIキー設定）は現時点では行�
 1. Datadog Agent をインフラに導入し、コンテナログを収集する。
 2. 上記JSON定義を Datadog Monitor API（`POST /api/v1/monitor`）または管理画面から登録する。
 3. 通知先（Slack等）を `message` 内のメンションに合わせて設定する。
+
+これらは未連携の設計例で、Datadog側での登録・クエリ有効性・通知到達は未検証。
+5xx例は割合ではなく件数を数える。認証フィルターで拒否されたリクエストはMVCの
+RequestLoggingInterceptorに到達しないため、この401モニターだけで全認証失敗を検知できるとは限らない。

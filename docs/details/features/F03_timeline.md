@@ -2,123 +2,49 @@
 
 [← 要件定義書に戻る](../../requirements.md)
 
----
 
-## 1. 概要
+## 対象と初期表示
 
-投稿を新着順（id 降順）でカーソルベースの無限スクロール（1ページ20件）で表示する。
-30秒ごとに新着件数をポーリングし、新着がある場合はバナーを表示してクリックで反映する（X/Twitter方式）。
+S-03 `/`。UIの初期タブは「フォロー中」、APIのfeed省略時はall（全体）。
+フォロー中は自分がフォローしているユーザーの投稿だけを表示し、自分自身の投稿は含めない。
+新着順はid降順。初回・次ページは20件固定で、末尾のIntersectionObserverによって追加取得する。
 
-> **実装状況（2026-06-29 時点）：** 「全体」タイムライン・「フォロー中」タブ・無限スクロール・新着ポーリングをすべて実装済み。
-
----
-
-## 2. 対象画面
-
-| 画面 ID | 画面名 |
+| API | 内容 |
 | --- | --- |
-| S-03 | タイムライン画面 |
+| GET `/api/posts?feed=all` | 全体の先頭20件 |
+| GET `/api/posts?feed=following&cursor={id}` | フォロー先のみでid < cursorの次の20件 |
+| GET `/api/posts/new-count?sinceId={id}&feed=all` | 新着件数を `{"count":N}` で返す |
+| GET `/api/posts/newer?sinceId={id}&feed=following` | 指定IDより新しい投稿配列 |
 
----
+feedは各APIでall/followingを指定できる。`limit` 引数は実装されていない。
 
-## 3. 業務フロー
+## 30秒ポーリング
 
 ```mermaid
 flowchart TD
-    A([タイムライン画面を開く]) --> B["GET /api/posts?limit=20 を呼び出し（初回ロード）"]
-    B --> C[投稿カード一覧を表示]
-    C --> D{ユーザー操作}
-    D -- 下スクロールで末尾到達 --> E["GET /api/posts?cursor={最後のid}&limit=20\n次ページを取得して追記"]
-    E --> C
-    D -- 新着バナーをクリック --> F["GET /api/posts/newer?sinceId={先頭id}\n新着投稿を先頭に追加"]
-    F --> C
-
-    subgraph 30秒ポーリング
-    P1[setInterval 30秒] --> P2["GET /api/posts/new-count?sinceId={先頭id}"]
-    P2 --> P3{count > 0?}
-    P3 -- はい --> P4[新着バナーを表示]
-    P3 -- いいえ --> P1
-    end
+    Timer[30秒タイマー] --> HasTop{先頭IDあり?}
+    HasTop -- いいえ --> Timer
+    HasTop -- はい --> Latest[現在のfeedの先頭ページを取得]
+    Latest --> Count[同じfeedの新着件数取得]
+    Count --> New{新着あり?}
+    New -- はい --> Fetch[新着配列を取得して先頭へ自動追加]
+    Fetch --> Banner[表示済みの新着件数をバナー表示]
+    New -- いいえ --> Refresh[取得範囲の削除と反応数を一覧に反映]
+    Banner --> Refresh
+    Refresh --> Timer
 ```
 
----
+バナーのクリックは件数通知を消すだけで、クリックを待って新着取得する方式ではない。
+空のフィード（先頭IDが0）ではポーリング処理をスキップするため、新規投稿の自動検出を保証しない。
+手動のタブ切替・再読み込みで取得し直せる。WebSocket・完全な即時更新ではない。
+タブ切替時は投稿配列・カーソル・新着件数をリセットし、古いfeedの初回/追加ロード結果を破棄する。
 
-## 4. ユースケース
+## 投稿カード
 
-詳細は [use-cases.md](../use-cases.md) の UC-04 を参照。
+表示項目は投稿者名・avatarUrl（未設定なら表示名の頭文字）・日時・本文・imageUrl（任意）・
+編集済みバッジ・いいね数と操作・コメント数と詳細リンク。本人には編集・削除ボタンがある。
+いいね・コメント・フォロー中フィード・画像表示はすべて実装済み。
 
----
 
-## 5. IPO
-
-### 全体タイムライン（実装済み）
-
-| 項目 | 内容 |
-| --- | --- |
-| 入力 | `cursor`（任意。前ページ最後の投稿 id）、`limit`（取得件数、デフォルト 20） |
-| 処理 | posts テーブルを id 降順で取得。cursor 指定時は `id < cursor` の条件を追加 |
-| 出力 | 投稿一覧（id・userId・displayName・content・createdAt・updatedAt） |
-
-### 新着件数チェック（30秒ポーリング）
-
-| 項目 | 内容 |
-| --- | --- |
-| 入力 | `sinceId`（現在先頭の投稿 id） |
-| 処理 | `id > sinceId` の posts 件数をカウント |
-| 出力 | 新着件数（number） |
-
-### 新着投稿取得（バナークリック時）
-
-| 項目 | 内容 |
-| --- | --- |
-| 入力 | `sinceId`（現在先頭の投稿 id） |
-| 処理 | `id > sinceId` の posts を id 降順で取得 |
-| 出力 | 新着投稿一覧 |
-
-### フォロー中タイムライン（実装済み）
-
-| 項目 | 内容 |
-| --- | --- |
-| 入力 | ログインユーザーの ID |
-| 処理 | follows テーブルで自分がフォローしているユーザーを取得 → その users_id に紐づく posts を id 降順で取得 |
-| 出力 | 投稿一覧 |
-
----
-
-## 6. 投稿カードの表示項目
-
-| 項目 | 内容 | 実装状況 |
-| --- | --- | --- |
-| 投稿者アバター | display_name の頭文字をアイコン表示 | ✅ 実装済み |
-| 投稿者名 | display_name | ✅ 実装済み |
-| 投稿日時 | createdAt（日本語ロケール表示） | ✅ 実装済み |
-| 投稿テキスト | content | ✅ 実装済み |
-| 編集済みバッジ | updatedAt ≠ createdAt の場合に表示 | ✅ 実装済み |
-| 編集・削除ボタン | 自分の投稿のみ表示 | ✅ 実装済み |
-| 投稿画像 | image_url（任意） | ✅ 実装済み |
-| いいね数・ボタン | likes テーブルの件数 | 将来対応予定 |
-| コメント数 | comments テーブルの件数 | 将来対応予定 |
-
----
-
-## 7. API エンドポイント
-
-| メソッド | パス | 説明 | 実装状況 |
-| --- | --- | --- | --- |
-| GET | `/api/posts?limit=20` | 全体タイムライン取得（初回） | ✅ 実装済み |
-| GET | `/api/posts?cursor={id}&limit=20` | 全体タイムライン取得（無限スクロール） | ✅ 実装済み |
-| GET | `/api/posts/new-count?sinceId={id}` | 新着件数チェック（30秒ポーリング用） | ✅ 実装済み |
-| GET | `/api/posts/newer?sinceId={id}` | 新着投稿取得（バナークリック時） | ✅ 実装済み |
-| GET | `/api/posts?feed=following&cursor={id}&limit=20` | フォロー中タイムライン取得 | ✅ 実装済み |
-
----
-
-## 8. データ設計（関連テーブル）
-
-| テーブル | 役割 |
-| --- | --- |
-| posts | 投稿データの取得元 |
-| users | 投稿者情報（display_name・avatar_url） |
-| likes | いいね数のカウント・自分がいいね済みかのフラグ |
-| comments | コメント数のカウント |
-| follows | 「フォロー中」タブ絞り込みに使用 |
+入力制約と文言は [入力チェック](../input-validation.md)・[エラーメッセージ](../error-messages.md)、
+データ構造は [データモデル](../data-model.md)、入出力は [API設計](../api-design.md) を参照。

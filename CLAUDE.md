@@ -122,11 +122,11 @@ Controller → Service → Repository
 | --- | --- |
 | E2Eテスト | Playwright 1.62.1（`frontend/e2e/`） |
 | パフォーマンステスト | k6（`backend/perf/`） |
-| フロントエンド | React 19.2.6 + TypeScript 6.0.2 |
-| ビルドツール | Vite 8.0.12 |
+| フロントエンド | React + TypeScript（正確な版は `frontend/package.json` / `package-lock.json`） |
+| ビルドツール | Vite（正確な版は `frontend/package.json` / `package-lock.json`） |
 | ルーティング | React Router 7.15.1 |
 | HTTP クライアント | Axios 1.16.1 |
-| バックエンド | Java 25 / Spring Boot 4.0.3 / Gradle 9.5.0 |
+| バックエンド | Java 25 / Spring Boot（版は `backend/build.gradle.kts`）/ Gradle 9.5.0 |
 | データベース | PostgreSQL 17 |
 | 画像ストレージ | AWS S3 |
 | コンテナ | Docker |
@@ -144,12 +144,12 @@ cp backend/.env.example backend/.env
 cd backend
 docker compose up -d
 
-# 2. バックエンド起動（backend/ ディレクトリで）
-cd backend
+# 2. backend/ のままバックエンド起動
 .\gradlew.bat bootRun
 
-# 3. フロントエンド起動（frontend/ ディレクトリで）
+# 3. リポジトリルートを開いた別の内蔵ターミナルで起動
 cd frontend
+npm ci
 npm run dev
 ```
 
@@ -160,7 +160,7 @@ npm run dev
 | プロファイル | 設定ファイル | 用途 |
 | --- | --- | --- |
 | `local`（既定） | `application-local.yml` | ローカル開発・E2E・性能計測。値は `backend/.env` から供給 |
-| `prod` | `application-prod.yml` | 本番。すべて実行環境の環境変数から供給し、既定値を持たない |
+| `prod` | `application-prod.yml` | 本番。DB・CORS・署名鍵・バケット等の必須値は環境変数から供給。ポート等の任意値は設定ファイルの既定値を参照 |
 | `test` | `application-test.yml` | 自動テスト（`@ActiveProfiles("test")`） |
 
 プロファイルを指定せずに起動すると `local` になる。本番は `SPRING_PROFILES_ACTIVE=prod` を設定する。
@@ -181,12 +181,12 @@ MinIOのコンソールは `http://localhost:9001`（ログイン情報は `back
 ## テスト実行
 
 ```bash
-cd backend && .\gradlew.bat test    # バックエンド単体・結合（JUnit 5）
+cd backend && .\gradlew.bat test    # バックエンド単体・結合（JUnit、Spring Boot管理）
 cd frontend && npm test             # フロントエンド単体（Vitest）
 cd frontend && npm run e2e          # E2E（Playwright）※DB・バックエンドを先に起動しておく
 ```
 
-E2Eとパフォーマンステストは手動実行の運用。詳細は各READMEを参照する。
+E2Eはローカルで実行できるほか `.github/workflows/ci.yml` でもChromiumを実行する。性能テストは手動実行。詳細は各READMEを参照する。
 
 - E2E: [frontend/e2e/README.md](frontend/e2e/README.md)
 - 性能: [backend/perf/README.md](backend/perf/README.md)

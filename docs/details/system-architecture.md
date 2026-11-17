@@ -24,13 +24,14 @@ flowchart LR
     ALB --> ECS
     ECS --> RDS
     ECS --> S3Images
+    User -- presigned URLで画像取得 --> S3Images
 ```
 
-- ブラウザが直接通信する相手はCloudFrontのみ。フロント（S3）とAPI（ALB）を同一オリジンにまとめることで、Mixed ContentとCookieのSameSite制約を回避している
+- 画面とAPIはCloudFrontを共通入口とする同一オリジン構成。画像はAPIが発行するpresigned URLを使い、ブラウザからS3へ直接取得する
 - ALBへは、CloudFrontが付与する秘密ヘッダー（`X-Origin-Verify`）を持つリクエストのみ到達可能。ALBのDNS名を直接知っていてもアクセスできない
 - ALBはHTTPリスナーのみ（独自ドメイン・ACM証明書は未取得のため）。CloudFront〜ALB間の内部区間のみHTTPで、ブラウザとの通信は常にHTTPS
-- 学習目的でコスト優先のため、RDS・VPC Interface Endpointはシングルaz構成。ECS Fargateはタスク数を1つ（`desired_count = 1`）に絞ることでコストを抑えている
-- 画像ストレージ（S3・上図の`S3Images`）は、ローカルDocker検証時に手動作成した既存バケットをそのまま使っており、**Terraformでは管理していない**（`terraform apply`/`destroy`の対象外。バケット自体のTerraform化は別Issueで対応予定）
+- 学習目的でコスト優先のため、RDS・VPC Interface Endpointはシングルaz構成。ECS Fargateは既定のタスク数を1つ（`ecs_desired_count = 1`、変数で変更可能）に絞ることでコストを抑えている
+- 画像S3は `s3-images.tf` の `aws_s3_bucket.post_images` でTerraform管理する。random_idを付けた別バケットで、旧手動バケットとは異なる。公開アクセスを禁止し、HTTPSのみ許可する。force_destroyはfalseで、オブジェクトが残るバケットはdestroyで削除できない
 
 ---
 
@@ -47,7 +48,7 @@ flowchart LR
     subgraph Backend["バックエンド (Spring Boot)"]
         Controller["Controller\nREST API エンドポイント"]
         Service["Service\nビジネスロジック"]
-        Repository["Repository\nDB アクセス (JPA)"]
+        Repository["Repository\nDB アクセス (MyBatis Mapper / XML)"]
         S3Service["S3 Service\n画像アップロード"]
     end
 
@@ -79,10 +80,13 @@ flowchart LR
         FE_Dev["React Dev Server\n(Vite)"]
         BE_Dev["Spring Boot\n(Gradle)"]
         DB_Dev["PostgreSQL 17\n(Docker コンテナ)"]
+        MinIO["MinIO\n(Docker コンテナ)"]
     end
 
     FE_Dev -- API リクエスト --> BE_Dev
     BE_Dev --> DB_Dev
+    BE_Dev --> MinIO
+    FE_Dev -- 署名URLで画像取得 --> MinIO
 ```
 
 | 項目 | ローカル環境 | 本番環境（AWS） |
@@ -90,4 +94,4 @@ flowchart LR
 | フロントエンド | Vite 開発サーバー | S3 + CloudFront |
 | バックエンド | Spring Boot 直接起動 | ECS Fargate |
 | DB | Docker（PostgreSQL） | RDS（PostgreSQL） |
-| 画像 | ローカルまたは S3 | S3 |
+| 画像 | DockerのMinIO（S3互換、署名URL） | Terraform管理のS3（署名URL） |

@@ -4,7 +4,7 @@
 | --- | --- |
 | プロジェクト名 | RaiseTimeLine |
 | 作成日 | 2026-06-23 |
-| 版 | 1.0 |
+| 版 | 1.4（2026-11-15 実装照合） |
 | 作成者 | — |
 
 ---
@@ -82,15 +82,15 @@ RaiseTech カリキュラムの受講生・個人が利用する学習用 SNS �
 
 | 機能 ID | 機能名 | 概要 | 詳細 |
 | --- | --- | --- | --- |
-| F-01 | ユーザー登録 | メールアドレス・パスワード・表示名で新規登録 | [F01_auth.md](details/features/F01_auth.md) |
+| F-01 | ユーザー登録 | メール・ユーザー名・表示名・パスワード、任意の読み仮名で登録 | [F01_auth.md](details/features/F01_auth.md) |
 | F-02 | ログイン／ログアウト | JWT 認証によるログイン・ログアウト | [F01_auth.md](details/features/F01_auth.md) |
 | F-03 | 投稿作成・編集・削除 | テキスト（280文字以内）＋任意画像（S3）。編集・削除は本人のみ | [F02_post.md](details/features/F02_post.md) |
 | F-04 | タイムライン表示 | タブ切り替えで「フォロー中」と「全体」の2種類を新着順で表示 | [F03_timeline.md](details/features/F03_timeline.md) |
 | F-05 | いいね | 投稿へのいいね・取り消し・件数表示 | [F04_like.md](details/features/F04_like.md) |
 | F-06 | コメント | 投稿へのコメント投稿・削除・件数表示 | [F05_comment.md](details/features/F05_comment.md) |
 | F-07 | フォロー／アンフォロー | 他ユーザーのフォロー・解除。フォロー数・フォロワー数を表示 | [F06_follow.md](details/features/F06_follow.md) |
-| F-08 | ユーザー検索 | 表示名で部分一致検索。結果からフォロー操作可能 | [F07_search.md](details/features/F07_search.md) |
-| F-09 | プロフィール表示・編集 | ユーザー名・アイコン画像・自己紹介文を表示。本人のみ編集可能 | [F08_profile.md](details/features/F08_profile.md) |
+| F-08 | ユーザー検索 | 表示名・読み仮名で部分一致検索（300msデバウンス）。結果からフォロー操作可能 | [F07_search.md](details/features/F07_search.md) |
+| F-09 | プロフィール表示・編集 | 表示名・アイコン画像・自己紹介文を表示。本人のみ編集可能 | [F08_profile.md](details/features/F08_profile.md) |
 
 ### 5.2 スコープ外
 
@@ -133,7 +133,7 @@ RaiseTech カリキュラムの受講生・個人が利用する学習用 SNS �
 | --- | --- |
 | コード品質 | Checkstyle（バックエンド）・oxlint + ESLint（フロントエンド）によるチェック。下記「Lintツールの選定」を参照 |
 | マイグレーション | Flyway による DB マイグレーション管理 |
-| テスト | 下記 6.6 のテスト戦略に従い、単体・結合・E2E・性能の4層で品質を担保する |
+| テスト | 下記 6.5 のテスト戦略に従い、単体・結合・E2E・性能の4層で品質を担保する |
 
 #### Lintツールの選定（フロントエンド）
 
@@ -161,36 +161,36 @@ ESLint の対象には `src/` だけでなく `e2e/` と `perf-browser/` も含�
   async でよく、返り値の Promise は React が無視する仕様。有効にすると定型的な指摘で埋まり、
   本当に危険な箇所（`if` の条件に Promise を渡す等）が埋もれる
 
-### 6.6 テスト戦略
+### 6.5 テスト戦略
 
 各層の役割は次のとおり。**同じ不具合を複数の層で重複して検出するのではなく、
 その層でしか見つけられないものを担当させる**方針とする。
 
 | 層 | ツール | 検証範囲 | 外部依存の扱い | 実行方法 |
 | --- | --- | --- | --- | --- |
-| 単体・結合（バックエンド） | JUnit 5 | Controller / Service / Repository の各責務と3層の疎通 | DBは H2 | `gradlew test` |
+| 単体・結合（バックエンド） | JUnit（Spring Boot管理） | Controller / Service / Repository の各責務と3層の疎通 | DBは H2 | `gradlew test` |
 | 単体（フロントエンド） | Vitest + React Testing Library | 画面・コンポーネントのロジック | APIは MSW でモック | `npm test` |
-| E2E | Playwright | 実ブラウザでの画面操作から DB 反映まで | **モックなし**（実バックエンド・実PostgreSQL） | `npm run e2e`（手動） |
+| E2E | Playwright | 実ブラウザでの画面操作から DB 反映まで | **モックなし**（実バックエンド・PostgreSQL・MinIO） | `npm run e2e` / CI（Chromium） |
 | 性能 | k6 | 負荷時のレスポンスタイム・エラー率 | ブラウザを介さず API に直接負荷 | `k6 run`（手動） |
 
 - フロントエンドの単体テストは MSW で API を偽装しているため、**フロントが期待する
   レスポンスとバックエンドが実際に返すレスポンスのズレは検出できない**。
   この結合部分を担保するのが E2E テストの役割である。
-- E2E と性能テストは CI に組み込まず、必要なタイミングで手動実行する。
-- 対応ブラウザ（6.5 移植性要件）の Chrome / Firefox / Edge は、Playwright の
+- E2EはCIにも組み込まれている（Chromium）。Firefox/Edgeと性能テストは必要時に手動実行する。
+- 対応ブラウザ（6.6 移植性要件）の Chrome / Firefox / Edge は、Playwright の
   ブラウザ指定（`--project`）で検証する。
 - テストデータには実データ・実在の個人名・実在しうるメールアドレスを使わない。
-  詳細は CLAUDE.md「テストデータの取り扱い」および
+  詳細は
   [frontend/e2e/README.md](../frontend/e2e/README.md) / [backend/perf/README.md](../backend/perf/README.md) を参照。
 
-### 6.5 移植性要件
+### 6.6 移植性要件
 
 | 項目 | 要件 |
 | --- | --- |
 | 対応環境 | Docker / docker-compose によるローカル環境構築 |
 | 対応ブラウザ | Chrome / Firefox / Edge 最新版 |
 
-### 6.6 拡張性要件
+### 6.7 拡張性要件
 
 | 項目 | 要件 |
 | --- | --- |
@@ -211,12 +211,12 @@ ESLint の対象には `src/` だけでなく `e2e/` と `perf-browser/` も含�
 | S-05 | 画面 | プロフィール画面 | 必要 | `/users/:id` |
 | S-06 | 画面 | ユーザー検索画面 | 必要 | `/search` |
 | S-07 | モーダル | 投稿作成モーダル | 必要 | — （S-03 から呼び出し） |
-| S-08 | モーダル | 投稿編集モーダル | 必要 | — （S-04 から呼び出し） |
+| S-08 | モーダル | 投稿編集モーダル | 必要 | — （S-03 / S-04 / S-05 の本人投稿から呼び出し） |
 | S-09 | 画面 | フォロー/フォロワー一覧画面 | 必要 | `/users/:id/followers` `/users/:id/following` |
-| S-10 | モーダル | プロフィール編集モーダル | 必要 | — （S-05 から呼び出し） |
+| S-10 | モーダル | プロフィール編集モーダル | 必要 | — （S-05 またはHomeの本人プロフィール編集から呼び出し） |
 
 > **共通 UI コンポーネント:**
-> D-01（削除確認ダイアログ）は S-04 の投稿削除・コメント削除の両操作で共通利用する。
+> D-01（削除確認ダイアログ）は S-03 / S-04 / S-05 の本人投稿の削除に使う。コメント削除は確認なし。
 
 ### 7.2 画面遷移図
 
@@ -232,29 +232,17 @@ ESLint の対象には `src/` だけでなく `e2e/` と `perf-browser/` も含�
 
 ### 8.1 技術スタック
 
-| 区分 | 技術 | バージョン |
+| 区分 | 技術 | バージョンの参照元 |
 | --- | --- | --- |
-| フロントエンド | React | 19.2.6 |
-| フロントエンド | TypeScript | 6.0.2 |
-| フロントエンド | Vite | 8.0.12 |
-| フロントエンド | React Router | 7.15.1 |
-| フロントエンド | Axios | 1.16.1 |
-| フロントエンド | oxlint | 1.69.0 |
-| フロントエンド | ESLint（typescript-eslint） | 10.8.1（8.67.0） |
-| バックエンド | Java | 25 |
-| バックエンド | Spring Boot | 4.0.3 |
-| バックエンド | Gradle | 9.5.0 |
-| バックエンド | jjwt（JWT） | 0.12.6 |
-| バックエンド | Checkstyle | 10.21.4 |
-| DB | PostgreSQL | 17 |
-| 画像ストレージ | AWS S3 | — |
-| インフラ | AWS（ECS Fargate + RDS + ALB + S3/CloudFront） | — |
-| テスト（単体・結合） | JUnit | 5 |
-| テスト（単体） | Vitest / React Testing Library | 4.1.9 |
-| テスト（E2E） | Playwright | 1.62.1 |
-| テスト（性能） | k6 | — |
-| ツール | Docker / docker-compose | — |
-| ツール | Flyway | — |
+| フロントエンド | React / TypeScript / Vite / React Router / Axios | [package.json](../frontend/package.json)、解決済みの版は [package-lock.json](../frontend/package-lock.json) |
+| 品質・フロントテスト | oxlint / ESLint / Vitest / React Testing Library / Playwright | 同上 |
+| バックエンド | Java 25 / Spring Boot / MyBatis / jjwt / Checkstyle / JUnit | [build.gradle.kts](../backend/build.gradle.kts) |
+| ビルド | Gradle | [Wrapper設定](../backend/gradle/wrapper/gradle-wrapper.properties) |
+| DB・画像 | PostgreSQL 17 / S3（ローカルはMinIO） | [Compose設定](../backend/docker-compose.yml) / Springの環境別設定 |
+| インフラ | ECS Fargate / RDS / ALB / S3 / CloudFront | [Terraform](../infra/terraform/README.md) |
+| 性能 | k6 / Lighthouse | [API性能](../backend/perf/README.md) / [ブラウザ性能](../frontend/perf-browser/README.md) |
+
+Node.jsは24系。依存パッケージの更新時にドキュメントの固定値が古くならないよう、詳細な版は定義ファイルを正とする。
 
 ### 8.2 システム構成図
 
@@ -272,11 +260,15 @@ ESLint の対象には `src/` だけでなく `e2e/` と `perf-browser/` も含�
 
 | フェーズ | 内容 | 状態 |
 | --- | --- | --- |
-| Phase 1 | 要件定義・ドキュメント整備 | 進行中 |
-| Phase 2 | 認証・投稿・タイムライン実装 | 未着手 |
-| Phase 3 | いいね・コメント・フォロー実装 | 未着手 |
-| Phase 4 | 検索・プロフィール・画像アップロード実装 | 未着手 |
-| Phase 5 | インフラ構築・デプロイ | 未着手 |
+| Phase 1 | 要件定義・ドキュメント整備 | 現行実装と継続的に照合 |
+| Phase 2 | 認証・投稿・タイムライン実装 | 実装済み |
+| Phase 3 | いいね・コメント・フォロー実装 | 実装済み |
+| Phase 4 | 検索・プロフィール・画像アップロード実装 | 実装済み |
+| Phase 5 | インフラ構築・デプロイ | Terraform・フロント配信スクリプト・ECRへのpushワークフロー実装済み。現在のAWS稼働状況は未確認 |
+
+実装済みはコードの存在を示し、本番稼働・全仕様の保証ではない。
+プロフィールAPIの文字列検証不足、検索UIの追加ページ未対応、空フィードの更新検知等の現状は
+[実装照合結果](implementation-audit.md) と各機能仕様を参照。
 
 ---
 
@@ -288,3 +280,4 @@ ESLint の対象には `src/` だけでなく `e2e/` と `perf-browser/` も含�
 | --- | --- | --- |
 | 2026-06-23 | 1.0 | 初版作成 |
 | 2026-06-23 | 1.1 | 画面構成に S-07〜S-10・D-01 を追加 |
+| 2026-11-15 | 1.4 | Issue #126：現行コードとAPI・データ・機能・運用資料を照合し同期 |

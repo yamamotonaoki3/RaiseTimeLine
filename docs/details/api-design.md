@@ -2,177 +2,91 @@
 
 [← 要件定義書に戻る](../requirements.md)
 
----
+現行のController・DTO・フロントエンドAPIクライアントを基準とする。API仕様の公開はローカルのみで、
+`/v3/api-docs` と `/swagger-ui.html` を利用できる。本番のSwagger/OpenAPI公開は無効。
 
-## 1. 基本仕様
+## 基本仕様
 
-| 項目 | 内容 |
+- ベースパスは `/api`。通常はJSON。投稿作成・編集、プロフィール編集は画像なしでも `multipart/form-data`。
+- 保護されたAPIは `Authorization: Bearer {accessToken}` を使う。アクセスJWTはフロントエンドのメモリに保持する。
+- リフレッシュトークンはHttpOnly Cookie（`refreshToken`、Path=`/api/auth`、Max-Age=7日）。
+  現行Cookie設定はSecure・SameSiteを明示していない。同一オリジン配信を前提とし、別サイト配信への対応を実装済みとしない。
+- 登録・ログイン・更新レスポンスは `accessToken, userId, displayName, email, avatarUrl`。
+- `avatarUrl` / `imageUrl` はDBのobject keyから表示時に生成する期限付きURL（未設定時はnull）。
+
+## エンドポイント
+
+「Bearer不要」はJWTなしで呼べるという意味。refresh・logoutではCookieを使用する。
+
+| メソッド | パス | 入力・結果 | Bearer |
+| --- | --- | --- | --- |
+| POST | `/api/auth/register` | JSON: email, username, displayName, password, yomi（任意）。201＋認証情報、Cookie発行 | 不要 |
+| POST | `/api/auth/login` | JSON: email, password。200＋認証情報、Cookie発行 | 不要 |
+| POST | `/api/auth/refresh` | Cookieで更新。200＋認証情報、Cookie更新 | 不要 |
+| POST | `/api/auth/logout` | Cookieに対応するトークン削除・Cookie消去。204 | 不要 |
+| GET | `/api/auth/me` | userId, displayName, email, avatarUrl, bio。200 | 必要 |
+| GET | `/api/posts?feed=all` | 新着順に最大20件。200＋PostResponse配列 | 必要 |
+| GET | `/api/posts?feed=following&cursor={id}` | フォロー先のみ、id < cursor。200＋PostResponse配列 | 必要 |
+| GET | `/api/posts/new-count?sinceId={id}&feed=all` | id > sinceId の件数。200＋`{"count":3}` | 必要 |
+| GET | `/api/posts/newer?sinceId={id}&feed=following` | id > sinceId の新着配列。200 | 必要 |
+| POST | `/api/posts` | multipart: content（必須）, image（任意）。201＋PostResponse | 必要 |
+| GET | `/api/posts/{id}` | 200＋PostResponse | 必要 |
+| PATCH | `/api/posts/{id}` | 本人のみ。multipart: content（必須）, image（任意）, removeImage（既定false）。200＋PostResponse | 必要 |
+| DELETE | `/api/posts/{id}` | 本人のみ。204 | 必要 |
+| GET | `/api/posts/{postId}/comments` | 200＋CommentResponse配列 | 必要 |
+| POST | `/api/posts/{postId}/comments` | JSON: content。201＋CommentResponse | 必要 |
+| DELETE | `/api/posts/{postId}/comments/{commentId}` | コメント本人のみ。204 | 必要 |
+| POST | `/api/posts/{postId}/like` | 204。重複リクエストはDBのON CONFLICT DO NOTHINGで冪等 | 必要 |
+| DELETE | `/api/posts/{postId}/like` | 204。未いいねの削除も冪等 | 必要 |
+| GET | `/api/users/{id}` | 200＋UserProfileResponse | 必要 |
+| PUT | `/api/users/{id}` | 本人のみ。multipart: displayName（必須パラメータ）, bio・avatar（任意）。200＋UserProfileResponse | 必要 |
+| GET | `/api/users/{id}/posts` | 200＋対象ユーザーのPostResponse配列（現行はページングなし） | 必要 |
+| GET | `/api/users/search?q={keyword}&page=0&size=20` | 200＋UserSummaryResponse配列。総件数・totalPagesは返さない | 必要 |
+| POST | `/api/users/{id}/follows` | 204。自己フォロー400、重複409 | 必要 |
+| DELETE | `/api/users/{id}/follows` | 204。未フォロー400 | 必要 |
+| GET | `/api/users/{id}/followers` | 200＋UserSummaryResponse配列 | 必要 |
+| GET | `/api/users/{id}/following` | 200＋UserSummaryResponse配列 | 必要 |
+
+投稿一覧APIの `feed` 既定値は `all`。UIの初期タブは `following`。
+`limit` パラメータは実装されておらず、PostServiceのページサイズは20件固定。
+`new-count` / `newer` のfeed既定値も `all`。現行コードは `following` 以外の値を全体として扱う。
+UIは30秒のポーリング中に新着を取得・自動追加し、通知バナーのクリックは件数表示を消す。
+
+## レスポンスのフィールド
+
+| DTO | フィールド |
 | --- | --- |
-| ベース URL | `/api` |
-| データ形式 | JSON（画像を含む場合は `multipart/form-data`） |
-| 認証方式 | JWT（Bearer トークン） |
-| 認証ヘッダー | `Authorization: Bearer {token}` |
+| PostResponse | id, userId, displayName, avatarUrl, content, imageUrl, createdAt, updatedAt, likeCount, likedByMe, commentCount |
+| CommentResponse | id, postId, userId, displayName, content, createdAt, updatedAt |
+| UserProfileResponse | id, displayName, avatarUrl, bio, followerCount, followingCount, postCount, followedByMe |
+| UserSummaryResponse | id, displayName, avatarUrl, bio, followedByMe |
 
----
+検索は表示名・読み仮名の部分一致。スペース除去と読み仮名側のカタカナ→ひらがな変換を行い、
+自分自身は除外する。APIはpage/sizeを受け取るが、検索UIは既定の先頭20件のみを表示し追加ページ操作はない。
 
-## 2. エンドポイント一覧
+## リクエスト・レスポンス例
 
-### 認証（Auth）
-
-| メソッド | パス | 概要 | 認証 |
-| --- | --- | --- | --- |
-| POST | `/api/auth/register` | ユーザー登録 → JWT（アクセストークン）＋リフレッシュトークン（Cookie）返却 | 不要 |
-| POST | `/api/auth/login` | ログイン → JWT（アクセストークン）＋リフレッシュトークン（Cookie）返却 | 不要 |
-| POST | `/api/auth/refresh` | リフレッシュトークンで新しいアクセストークンを発行 | 不要（Cookie） |
-| POST | `/api/auth/logout` | リフレッシュトークンを無効化・Cookie 削除 | 必要 |
-
-### 投稿（Posts）
-
-| メソッド | パス | 概要 | 認証 | 実装状況 |
-| --- | --- | --- | --- | --- |
-| GET | `/api/posts?limit=20` | 全体タイムライン取得（初回） | 必要 | ✅ 実装済み |
-| GET | `/api/posts?cursor={id}&limit=20` | 全体タイムライン取得（無限スクロール） | 必要 | ✅ 実装済み |
-| GET | `/api/posts/new-count?sinceId={id}` | 新着件数チェック（30秒ポーリング用） | 必要 | ✅ 実装済み |
-| GET | `/api/posts/newer?sinceId={id}` | 新着投稿取得（バナークリック時） | 必要 | ✅ 実装済み |
-| POST | `/api/posts` | 投稿作成（JSON） | 必要 | ✅ 実装済み |
-| GET | `/api/posts/{id}` | 投稿詳細取得 | 必要 | ✅ 実装済み |
-| PATCH | `/api/posts/{id}` | 投稿編集（本人のみ） | 必要 | ✅ 実装済み |
-| DELETE | `/api/posts/{id}` | 投稿削除（本人のみ） | 必要 | ✅ 実装済み |
-| GET | `/api/posts?feed=following&cursor={id}&limit=20` | フォロー中タイムライン取得 | 必要 | 将来対応予定 |
-
-### コメント（Comments）
-
-| メソッド | パス | 概要 | 認証 |
-| --- | --- | --- | --- |
-| GET | `/api/posts/{postId}/comments` | コメント一覧取得 | 必要 |
-| POST | `/api/posts/{postId}/comments` | コメント投稿 | 必要 |
-| DELETE | `/api/comments/{id}` | コメント削除（本人のみ） | 必要 |
-
-### いいね（Likes）
-
-| メソッド | パス | 概要 | 認証 |
-| --- | --- | --- | --- |
-| POST | `/api/posts/{postId}/likes` | いいね | 必要 |
-| DELETE | `/api/posts/{postId}/likes` | いいね取り消し | 必要 |
-
-### ユーザー（Users）
-
-| メソッド | パス | 概要 | 認証 |
-| --- | --- | --- | --- |
-| GET | `/api/users/{id}` | プロフィール取得 | 必要 |
-| PUT | `/api/users/{id}` | プロフィール編集（本人のみ、multipart/form-data） | 必要 |
-| GET | `/api/users/{id}/posts` | ユーザーの投稿一覧 | 必要 |
-| GET | `/api/users/search?q={keyword}` | ユーザー検索（表示名の部分一致） | 必要 |
-
-### フォロー（Follows）
-
-| メソッド | パス | 概要 | 認証 |
-| --- | --- | --- | --- |
-| POST | `/api/users/{id}/follows` | フォロー | 必要 |
-| DELETE | `/api/users/{id}/follows` | アンフォロー | 必要 |
-| GET | `/api/users/{id}/followers` | フォロワー一覧 | 必要 |
-| GET | `/api/users/{id}/following` | フォロー中一覧 | 必要 |
-
----
-
-## 3. リクエスト・レスポンス例
-
-### POST `/api/auth/register`
-
-**リクエスト**
+登録（201 Created）：
 
 ```json
-{
-  "email": "user@example.com",
-  "username": "username",
-  "displayName": "表示名",
-  "password": "Password123!"
-}
+{"email":"demo@example.invalid","username":"demo_user","displayName":"デモユーザー","password":"DemoOnly123!","yomi":"でもゆーざー"}
 ```
 
-**レスポンス（200 OK）**
+認証レスポンス（実トークンは例に記載しない）：
 
 ```json
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "userId": 1,
-  "displayName": "表示名",
-  "email": "user@example.com"
-}
+{"accessToken":"<access-token>","userId":1,"displayName":"デモユーザー","email":"demo@example.invalid","avatarUrl":null}
 ```
 
-※ リフレッシュトークンは HttpOnly Cookie で返却
-
----
-
-### POST `/api/auth/login`
-
-**リクエスト**
+検索レスポンス：
 
 ```json
-{
-  "email": "user@example.com",
-  "password": "Password123!"
-}
+[{"id":2,"displayName":"デモの相手","avatarUrl":null,"bio":null,"followedByMe":false}]
 ```
 
-**レスポンス（200 OK）**
+## エラーと現行の制約
 
-```json
-{
-  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "userId": 1,
-  "displayName": "表示名",
-  "email": "user@example.com"
-}
-```
-
-※ リフレッシュトークンは HttpOnly Cookie で返却
-
----
-
-### GET `/api/posts?limit=20`
-
-**レスポンス（200 OK）**
-
-```json
-[
-  {
-    "id": 42,
-    "userId": 2,
-    "displayName": "表示名",
-    "content": "投稿テキスト",
-    "createdAt": "2026-06-27T10:00:00",
-    "updatedAt": "2026-06-27T10:00:00"
-  }
-]
-```
-
-### GET `/api/posts/new-count?sinceId=42`
-
-**レスポンス（200 OK）**
-
-```json
-3
-```
-
----
-
-### GET `/api/users/search?q=keyword&page=0&size=20`
-
-**レスポンス（200 OK）**
-
-```json
-{
-  "content": [
-    {
-      "id": 3,
-      "displayName": "キーワードユーザー",
-      "avatarUrl": null,
-      "following": false
-    }
-  ],
-  "totalPages": 1,
-  "totalElements": 1
-}
-```
+DTO検証エラーは400＋`{"status":400,"errors":[{"field":"password","message":"..."}]}`。
+業務例外はstatusとmessageを返す。未認証のフィルター応答はこの共通形式に限らない。
+具体的な文言・区別は [エラーメッセージ](error-messages.md) と [入力チェック](input-validation.md) を参照。
+プロフィール更新では文字列のBean Validationは接続されていないため、UIの文字数制約とAPIの検証範囲を混同しない。

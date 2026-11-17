@@ -17,8 +17,9 @@ choco install k6
 
 ### 2. アプリケーションの起動
 
-```bash
-docker compose up -d
+```powershell
+# リポジトリルートから（初回はルートREADMEの .env 設定も必要）
+docker compose -f backend/docker-compose.yml up -d
 cd backend
 .\gradlew.bat bootRun
 ```
@@ -34,6 +35,7 @@ DBの認証情報は `backend/.env` にあります（コミットされてい�
 # Git Bash の例（backend/ で実行）
 set -a && . ./.env && set +a
 export PGPASSWORD="$DB_PASSWORD"
+cd ..  # 以降の psql / k6 コマンドはリポジトリルートで実行
 ```
 
 ```bash
@@ -67,7 +69,7 @@ psql -h localhost -U "$DB_USERNAME" -d raisetimeline -f backend/perf/seed/seed-p
 | `soak` | 中程度の負荷を長時間維持し、メモリリークやコネクションリークなど時間経過で悪化する問題を検出する（本来は数時間〜行うが、学習用途のため1時間に短縮） | 15 VU を1時間維持 | 約1時間 |
 | `breakpoint` | stressのように上限を決め打ちせず、実際に破綻する地点まで段階的に負荷を上げ続ける | 0→100→200→300 VU と段階的に増加 | 約20分 |
 
-スケーラビリティテスト（サーバー増強による性能向上を確認するテスト）は、RaiseTimeLineがDocker単一コンテナ構成でオートスケール機構を持たないため対象外としています。
+この手順はローカルの単一バックエンドへの負荷計測で、AWSのスケーラビリティ検証は対象外です。TerraformはECS Fargateを定義し、タスク数は変数で指定できますが、オートスケーリング設定はありません。
 
 ```bash
 # タイムライン取得シナリオ（ログイン→タイムライン→新着ポーリング）
